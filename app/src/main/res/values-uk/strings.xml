@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Цей пристрій збережено на NAS. Жоден інший пристрій ще не синхронізувався сюди.</string>
     <string name="sync_nas_failed">Не вдалося з\'єднатися з вашим NAS. Перевірте, що він увімкнений, а дані в налаштуваннях запису правильні.</string>
     <string name="sync_nas_auto">Автосинхронізація при відкритті застосунку</string>
-    <string name="about_title">Про OpenTV</string>
+    <string name="about_title">Про D-TV</string>
     <string name="about_version">Версія</string>
     <string name="about_update_available">Доступне оновлення: %1$s — див. підказку для встановлення.</string>
     <string name="about_up_to_date">У вас найновіша версія.</string>

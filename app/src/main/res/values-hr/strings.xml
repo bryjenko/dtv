@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Ovaj uređaj spremljen je na NAS. Nijedan drugi uređaj još se nije sinkronizirao ovdje.</string>
     <string name="sync_nas_failed">Nije moguće doći do NAS-a. Provjerite je li uključen i jesu li podaci u postavkama snimanja točni.</string>
     <string name="sync_nas_auto">Automatska sinkronizacija pri pokretanju aplikacije</string>
-    <string name="about_title">O aplikaciji OpenTV</string>
+    <string name="about_title">O aplikaciji D-TV</string>
     <string name="about_version">Verzija</string>
     <string name="about_update_available">Dostupno ažuriranje: %1$s — pogledajte upit za instalaciju.</string>
     <string name="about_up_to_date">Koristite najnoviju verziju.</string>

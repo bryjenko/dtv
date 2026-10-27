@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Đã lưu thiết bị này vào NAS. Chưa có thiết bị nào khác đồng bộ ở đây.</string>
     <string name="sync_nas_failed">Không thể kết nối tới NAS của bạn. Kiểm tra xem nó đã bật chưa và thông tin trong Cài đặt ghi hình có đúng không.</string>
     <string name="sync_nas_auto">Tự động đồng bộ khi mở ứng dụng</string>
-    <string name="about_title">Giới thiệu về OpenTV</string>
+    <string name="about_title">Giới thiệu về D-TV</string>
     <string name="about_version">Phiên bản</string>
     <string name="about_update_available">Có bản cập nhật: %1$s — xem hướng dẫn để cài đặt.</string>
     <string name="about_up_to_date">Bạn đang dùng phiên bản mới nhất.</string>

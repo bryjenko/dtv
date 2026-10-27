@@ -329,12 +329,15 @@
     <string name="sync_nas_auto">Auto-sync when the app opens</string>
 
     <!-- ============================ About ============================ -->
-    <string name="about_title">About OpenTV</string>
+    <string name="about_title">About D-TV</string>
     <string name="about_version">Version</string>
     <string name="about_update_available">Update available: %1$s — see the prompt to install.</string>
     <string name="about_up_to_date">You\'re on the latest version.</string>
     <string name="about_checking">Checking…</string>
     <string name="about_check_updates">Check for updates</string>
+    <string name="about_no_release">No release APK has been published on GitHub yet.</string>
+    <string name="about_missing_apk">The latest GitHub release does not include an APK.</string>
+    <string name="about_check_failed">Could not check for updates. Check your connection and try again.</string>
     <string name="about_what_is_title">What it is</string>
     <string name="about_what_is_body">A free, open-source IPTV player for Android TV, Fire TV and phones. It\'s a player only — it doesn\'t supply channels; you connect the service you already pay for. Nothing you enter leaves your device except to talk to your own provider.</string>
     <string name="about_built_open_title">Built in the open</string>

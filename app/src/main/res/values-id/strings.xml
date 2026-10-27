@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Perangkat ini disimpan ke NAS. Belum ada perangkat lain yang tersinkron ke sini.</string>
     <string name="sync_nas_failed">Tidak dapat menjangkau NAS Anda. Periksa apakah NAS menyala dan detail di pengaturan Rekaman sudah benar.</string>
     <string name="sync_nas_auto">Sinkron otomatis saat aplikasi dibuka</string>
-    <string name="about_title">Tentang OpenTV</string>
+    <string name="about_title">Tentang D-TV</string>
     <string name="about_version">Versi</string>
     <string name="about_update_available">Pembaruan tersedia: %1$s — lihat perintah untuk memasang.</string>
     <string name="about_up_to_date">Anda menggunakan versi terbaru.</string>

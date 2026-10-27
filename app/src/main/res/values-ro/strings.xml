@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Acest dispozitiv a fost salvat pe NAS. Niciun alt dispozitiv nu s-a sincronizat încă aici.</string>
     <string name="sync_nas_failed">Nu s-a putut ajunge la NAS. Verifică dacă este pornit și dacă detaliile din Setări înregistrare sunt corecte.</string>
     <string name="sync_nas_auto">Sincronizare automată la deschiderea aplicației</string>
-    <string name="about_title">Despre OpenTV</string>
+    <string name="about_title">Despre D-TV</string>
     <string name="about_version">Versiune</string>
     <string name="about_update_available">Actualizare disponibilă: %1$s — vezi solicitarea pentru instalare.</string>
     <string name="about_up_to_date">Ai cea mai recentă versiune.</string>

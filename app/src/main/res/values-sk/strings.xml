@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Toto zariadenie bolo uložené na NAS. Zatiaľ sa tu nesynchronizovalo žiadne iné zariadenie.</string>
     <string name="sync_nas_failed">Nepodarilo sa pripojiť k vášmu NAS. Skontrolujte, či je zapnutý a či sú údaje v Nastaveniach nahrávania správne.</string>
     <string name="sync_nas_auto">Automatická synchronizácia pri spustení aplikácie</string>
-    <string name="about_title">O aplikácii OpenTV</string>
+    <string name="about_title">O aplikácii D-TV</string>
     <string name="about_version">Verzia</string>
     <string name="about_update_available">K dispozícii je aktualizácia: %1$s — pokyny na inštaláciu nájdete vo výzve.</string>
     <string name="about_up_to_date">Používate najnovšiu verziu.</string>

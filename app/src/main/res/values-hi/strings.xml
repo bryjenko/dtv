@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">इस डिवाइस को NAS पर सेव किया गया। अभी तक किसी अन्य डिवाइस ने यहां सिंक नहीं किया है।</string>
     <string name="sync_nas_failed">आपके NAS तक नहीं पहुंचा जा सका। जांचें कि वह चालू है और रिकॉर्डिंग सेटिंग्स में विवरण सही हैं।</string>
     <string name="sync_nas_auto">ऐप खुलने पर ऑटो-सिंक करें</string>
-    <string name="about_title">OpenTV के बारे में</string>
+    <string name="about_title">D-TV के बारे में</string>
     <string name="about_version">वर्शन</string>
     <string name="about_update_available">अपडेट उपलब्ध है: %1$s — इंस्टॉल करने के लिए प्रॉम्प्ट देखें।</string>
     <string name="about_up_to_date">आप नवीनतम वर्शन पर हैं।</string>

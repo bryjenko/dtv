@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Lagret denne enheten til NAS-en. Ingen andre enheter har synkronisert hit ennå.</string>
     <string name="sync_nas_failed">Fikk ikke kontakt med NAS-en din. Sjekk at den er på, og at detaljene i opptaksinnstillingene stemmer.</string>
     <string name="sync_nas_auto">Synkroniser automatisk når appen åpnes</string>
-    <string name="about_title">Om OpenTV</string>
+    <string name="about_title">Om D-TV</string>
     <string name="about_version">Versjon</string>
     <string name="about_update_available">Oppdatering tilgjengelig: %1$s — se forespørselen for å installere.</string>
     <string name="about_up_to_date">Du har den nyeste versjonen.</string>

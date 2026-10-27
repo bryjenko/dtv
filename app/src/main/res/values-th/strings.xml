@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">บันทึกอุปกรณ์นี้ไปยัง NAS แล้ว ยังไม่มีอุปกรณ์อื่นซิงค์มาที่นี่</string>
     <string name="sync_nas_failed">ไม่สามารถเข้าถึง NAS ของคุณได้ ตรวจสอบว่าเปิดเครื่องอยู่และรายละเอียดในการตั้งค่าการบันทึกถูกต้อง</string>
     <string name="sync_nas_auto">ซิงค์อัตโนมัติเมื่อเปิดแอป</string>
-    <string name="about_title">เกี่ยวกับ OpenTV</string>
+    <string name="about_title">เกี่ยวกับ D-TV</string>
     <string name="about_version">เวอร์ชัน</string>
     <string name="about_update_available">มีอัปเดต: %1$s — ดูข้อความแจ้งเพื่อติดตั้ง</string>
     <string name="about_up_to_date">คุณใช้เวอร์ชันล่าสุดอยู่แล้ว</string>

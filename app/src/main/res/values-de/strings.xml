@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Dieses Gerät wurde auf dem NAS gespeichert. Bisher hat sich noch kein anderes Gerät hier synchronisiert.</string>
     <string name="sync_nas_failed">Dein NAS konnte nicht erreicht werden. Überprüfe, ob es eingeschaltet ist und die Angaben in den Aufnahme-Einstellungen stimmen.</string>
     <string name="sync_nas_auto">Automatisch synchronisieren beim App-Start</string>
-    <string name="about_title">Über OpenTV</string>
+    <string name="about_title">Über D-TV</string>
     <string name="about_version">Version</string>
     <string name="about_update_available">Update verfügbar: %1$s — siehe Hinweis zur Installation.</string>
     <string name="about_up_to_date">Du hast die neueste Version.</string>

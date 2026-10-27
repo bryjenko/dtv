@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Ez az eszköz mentve a NAS-ra. Még egyetlen másik eszköz sem szinkronizált ide.</string>
     <string name="sync_nas_failed">Nem sikerült elérni a NAS-t. Ellenőrizze, hogy be van-e kapcsolva, és hogy a Felvétel beállításaiban megadott adatok helyesek-e.</string>
     <string name="sync_nas_auto">Automatikus szinkronizálás az alkalmazás megnyitásakor</string>
-    <string name="about_title">Az OpenTV névjegye</string>
+    <string name="about_title">Az D-TV névjegye</string>
     <string name="about_version">Verzió</string>
     <string name="about_update_available">Elérhető frissítés: %1$s — a telepítéshez lásd a felugró ablakot.</string>
     <string name="about_up_to_date">A legújabb verziót használja.</string>

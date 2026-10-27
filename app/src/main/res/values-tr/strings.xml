@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Bu cihaz NAS\'a kaydedildi. Henüz başka bir cihaz burada senkronize olmadı.</string>
     <string name="sync_nas_failed">NAS\'ınıza ulaşılamadı. Açık olduğundan ve Kayıt ayarlarındaki bilgilerin doğru olduğundan emin olun.</string>
     <string name="sync_nas_auto">Uygulama açıldığında otomatik senkronize et</string>
-    <string name="about_title">OpenTV Hakkında</string>
+    <string name="about_title">D-TV Hakkında</string>
     <string name="about_version">Sürüm</string>
     <string name="about_update_available">Güncelleme mevcut: %1$s — yüklemek için istemi görün.</string>
     <string name="about_up_to_date">En son sürümü kullanıyorsunuz.</string>

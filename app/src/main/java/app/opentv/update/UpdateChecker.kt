@@ -6,6 +6,7 @@
 package app.opentv.update
 
 import app.opentv.data.remote.GitHubRelease
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -22,9 +23,9 @@ import okhttp3.Request
  * you; the Downloader-app install route we ship through does not, so the app has to do it.
  *
  * ## Design
- * - **Silent on failure.** No network, rate-limited, a 404 because the release does not exist
- *   yet — all of it returns "no update" and never surfaces an error. An update check is a
- *   nicety; it must never be a thing that breaks or nags at launch.
+ * - **Quiet automatic checks.** [check] treats network failures and missing releases as no update,
+ *   so a background check never nags at launch. [checkDetailed] keeps those states distinct for
+ *   the manual status shown in About.
  * - **Compares the tag, not a build number.** GitHub gives us a tag like `v0.2.0`. We parse it
  *   as a dotted version and compare it to our own [currentVersionName]. A release whose tag is
  *   not strictly newer is ignored, so re-tagging or a same-version hotfix will not prompt.
@@ -35,6 +36,14 @@ class UpdateChecker(
     private val currentVersionName: String,
     private val repoSlug: String = REPO_SLUG,
 ) {
+    sealed interface CheckResult {
+        data class Available(val update: Update) : CheckResult
+        data object UpToDate : CheckResult
+        data object NoRelease : CheckResult
+        data object MissingApk : CheckResult
+        data object Failed : CheckResult
+    }
+
     data class Update(
         val versionName: String,
         val title: String,
@@ -46,9 +55,12 @@ class UpdateChecker(
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    /** Returns the newer release, or null if we are current / could not tell. */
-    suspend fun check(): Update? = withContext(Dispatchers.IO) {
-        runCatching {
+    /** Returns a newer release, or null if we are current / could not tell. */
+    suspend fun check(): Update? = (checkDetailed() as? CheckResult.Available)?.update
+
+    /** A manual check can show a useful status for missing releases and network failures. */
+    suspend fun checkDetailed(): CheckResult = withContext(Dispatchers.IO) {
+        try {
             val request = Request.Builder()
                 .url("https://api.github.com/repos/$repoSlug/releases/latest")
                 .header("Accept", "application/vnd.github+json")
@@ -56,31 +68,38 @@ class UpdateChecker(
                 .build()
 
             http.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@withContext null
+                if (response.code == 404) return@withContext CheckResult.NoRelease
+                if (!response.isSuccessful) return@withContext CheckResult.Failed
                 val body = response.body?.string().orEmpty()
-                if (body.isBlank()) return@withContext null
+                if (body.isBlank()) return@withContext CheckResult.Failed
 
                 val release = json.decodeFromString<GitHubRelease>(body)
-                if (release.draft || release.prerelease) return@withContext null
+                if (release.draft || release.prerelease) return@withContext CheckResult.NoRelease
 
-                val asset = release.apkAsset() ?: return@withContext null
-                if (!isNewer(release.tagName, currentVersionName)) return@withContext null
+                val asset = release.apkAsset() ?: return@withContext CheckResult.MissingApk
+                if (!isNewer(release.tagName, currentVersionName)) return@withContext CheckResult.UpToDate
 
-                Update(
-                    versionName = release.tagName.trimStart('v', 'V'),
-                    title = release.name.ifBlank { release.tagName },
-                    notes = cleanNotes(release.body),
-                    apkUrl = asset.browserDownloadUrl,
-                    apkSizeBytes = asset.size,
-                    releaseUrl = release.htmlUrl,
+                CheckResult.Available(
+                    Update(
+                        versionName = release.tagName.trimStart('v', 'V'),
+                        title = release.name.ifBlank { release.tagName },
+                        notes = cleanNotes(release.body),
+                        apkUrl = asset.browserDownloadUrl,
+                        apkSizeBytes = asset.size,
+                        releaseUrl = release.htmlUrl,
+                    ),
                 )
             }
-        }.getOrNull()
+        } catch (cancel: CancellationException) {
+            throw cancel
+        } catch (_: Exception) {
+            CheckResult.Failed
+        }
     }
 
     companion object {
         /** The single place the project's GitHub location is written down. */
-        const val REPO_SLUG = "opentvproject/opentv"
+        const val REPO_SLUG = "bryjenko/dtv"
 
         /**
          * The GitHub release body is written for developers and has GitHub's auto-generated

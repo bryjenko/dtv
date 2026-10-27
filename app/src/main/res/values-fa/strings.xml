@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">این دستگاه در NAS ذخیره شد. هنوز هیچ دستگاه دیگری اینجا همگام‌سازی نکرده است.</string>
     <string name="sync_nas_failed">اتصال به NAS شما ممکن نشد. بررسی کنید روشن باشد و اطلاعات آن در تنظیمات ضبط درست باشد.</string>
     <string name="sync_nas_auto">همگام‌سازی خودکار هنگام باز شدن برنامه</string>
-    <string name="about_title">درباره OpenTV</string>
+    <string name="about_title">درباره D-TV</string>
     <string name="about_version">نسخه</string>
     <string name="about_update_available">به‌روزرسانی موجود است: %1$s — برای نصب، پیام مربوطه را ببینید.</string>
     <string name="about_up_to_date">شما از جدیدترین نسخه استفاده می‌کنید.</string>

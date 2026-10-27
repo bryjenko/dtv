@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Questo dispositivo è stato salvato sul NAS. Nessun altro dispositivo si è ancora sincronizzato qui.</string>
     <string name="sync_nas_failed">Impossibile raggiungere il tuo NAS. Verifica che sia acceso e che i dati nelle impostazioni di registrazione siano corretti.</string>
     <string name="sync_nas_auto">Sincronizzazione automatica all\'apertura dell\'app</string>
-    <string name="about_title">Informazioni su OpenTV</string>
+    <string name="about_title">Informazioni su D-TV</string>
     <string name="about_version">Versione</string>
     <string name="about_update_available">Aggiornamento disponibile: %1$s — consulta l\'avviso per installarlo.</string>
     <string name="about_up_to_date">Stai usando l\'ultima versione.</string>

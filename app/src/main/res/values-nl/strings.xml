@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Dit apparaat is opgeslagen op de NAS. Er zijn nog geen andere apparaten hiermee gesynchroniseerd.</string>
     <string name="sync_nas_failed">Kan je NAS niet bereiken. Controleer of deze aanstaat en of de gegevens in Opname-instellingen kloppen.</string>
     <string name="sync_nas_auto">Automatisch synchroniseren bij het openen van de app</string>
-    <string name="about_title">Over OpenTV</string>
+    <string name="about_title">Over D-TV</string>
     <string name="about_version">Versie</string>
     <string name="about_update_available">Update beschikbaar: %1$s — zie de melding om te installeren.</string>
     <string name="about_up_to_date">Je hebt de nieuwste versie.</string>

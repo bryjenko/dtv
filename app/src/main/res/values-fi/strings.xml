@@ -293,7 +293,7 @@
     <string name="sync_nas_uploaded">Tämä laite tallennettu NAS-laitteeseen. Yksikään muu laite ei ole vielä synkronoinut tänne.</string>
     <string name="sync_nas_failed">NAS-laitetta ei tavoitettu. Tarkista, että se on päällä ja että tallennusasetusten tiedot ovat oikein.</string>
     <string name="sync_nas_auto">Synkronoi automaattisesti, kun sovellus avataan</string>
-    <string name="about_title">Tietoja OpenTV:stä</string>
+    <string name="about_title">Tietoja D-TV:stä</string>
     <string name="about_version">Versio</string>
     <string name="about_update_available">Päivitys saatavilla: %1$s — katso asennuskehote.</string>
     <string name="about_up_to_date">Sinulla on uusin versio.</string>
