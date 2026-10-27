@@ -23,11 +23,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Backspace
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,8 +42,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -60,13 +63,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/**
- * Channel search with an on-screen keyboard.
- *
- * Android TV's default text field punts to "type on your phone", which is useless if your phone
- * isn't to hand. This screen draws its own d-pad keyboard so search works with the remote alone,
- * and shows matching channels live as you type.
- */
+/** Channel search using the device's text input method, with matching results shown live. */
 @Composable
 fun SearchScreen(
     onPlayChannel: (Channel) -> Unit,
@@ -77,6 +74,8 @@ fun SearchScreen(
     vodViewModel: VodViewModel = viewModel(),
 ) {
     var query by remember { mutableStateOf("") }
+    val searchFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
     val channelResults by viewModel.searchResults.collectAsState()
     val movieResults by vodViewModel.movieResults.collectAsState()
     val seriesResults by vodViewModel.seriesResults.collectAsState()
@@ -86,6 +85,7 @@ fun SearchScreen(
         viewModel.setSearchQuery(query)
         vodViewModel.setVodSearchQuery(query)
     }
+    LaunchedEffect(Unit) { searchFocusRequester.requestFocus() }
     BackHandler { onBack() }
 
     Column(
@@ -96,29 +96,26 @@ fun SearchScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.nav_search), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.width(20.dp))
-            Text(
-                query.ifEmpty { stringResource(R.string.search_type_name) },
-                style = MaterialTheme.typography.titleLarge,
-                color = if (query.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.primary,
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it.take(40) },
+                modifier = Modifier.weight(1f).focusRequester(searchFocusRequester),
+                singleLine = true,
+                placeholder = { Text(stringResource(R.string.search_type_name)) },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Search,
+                ),
+                keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
             )
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.width(16.dp))
             OutlinedButton(onClick = onBack) { Text(stringResource(R.string.common_done)) }
         }
 
         Spacer(Modifier.height(20.dp))
 
         Row(Modifier.fillMaxSize()) {
-            OnScreenKeyboard(
-                onKey = { if (query.length < 40) query += it },
-                onSpace = { if (query.length < 40) query += " " },
-                onBackspace = { query = query.dropLast(1) },
-                onClear = { query = "" },
-            )
-
-            Spacer(Modifier.width(28.dp))
-
-            Column(Modifier.weight(1f).fillMaxSize()) {
+            Column(Modifier.fillMaxSize()) {
                 when {
                     query.isBlank() -> Hint(stringResource(R.string.search_start_hint))
                     query.trim().length < 2 -> Hint(stringResource(R.string.common_keep_typing))
