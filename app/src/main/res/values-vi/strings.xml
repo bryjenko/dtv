@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- OpenTV UI translation. Auto-assembled; English fallback for any gap. -->
 <resources>
-    <string name="app_name">OpenTV</string>
+    <string name="app_name">D-TV</string>
     <string name="common_done">Xong</string>
     <string name="common_cancel">Hủy</string>
     <string name="common_back">Quay lại</string>
