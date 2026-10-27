@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0
+
+- First D-TV release from the independent `bryjenko/dtv` code line.
+- The About screen now shows the installed version and checks for APK releases on this repository.
+- Search uses the Android TV system keyboard.
+- The installed app name is D-TV.
+
 ## 0.11.8
 
 - **Edit a saved provider.** Settings → Providers now has an **Edit** button on each provider, so you
