@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7
+
+- **MP2 audio fallback.** Live playback includes the Jellyfin Media3 FFmpeg audio decoder as a
+  fallback when Android has no compatible built-in decoder, including MPEG Layer II (MP2).
+
 ## 1.6
 
 - **Audio diagnostics and focus.** Live playback now requests Android media audio focus. If a
