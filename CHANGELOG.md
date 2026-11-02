@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3
+
+- **Update over D-TV 1.2.** Uses the same app ID and persistent signing key as v1.2 so Android can
+  install this release as an update and keep the existing D-TV app data.
+
 ## 1.2
 
 - **Hide or show a whole channel group.** The TV channel manager now has a group-wide switch while
