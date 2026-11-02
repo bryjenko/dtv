@@ -233,7 +233,7 @@ class ChannelsViewModel(app: Application) : AndroidViewModel(app) {
 
     val categoryGroups: StateFlow<List<CategoryGroup>> =
         combine(
-            graph.catalogRepository.observeCategories(StreamKind.LIVE),
+            graph.catalogRepository.observeCategoriesWithVisibleChannels(StreamKind.LIVE),
             selectedSource,
         ) { raw, sourceId ->
             // Scope the category rail to the chosen provider, so a second playlist's categories show
@@ -369,7 +369,9 @@ class ChannelsViewModel(app: Application) : AndroidViewModel(app) {
     val rows: StateFlow<List<Row>> =
         combine(selectedCategory, favouritesOnly, query, categoryGroups, hiddenCategoryIds) {
                 category, favs, q, groups, hidden ->
-            val ids = category?.let { key -> groups.firstOrNull { it.key == key }?.ids }
+            // A category can disappear when its last visible channel is hidden. Keep that
+            // selection empty instead of letting a missing id fall through to "All channels".
+            val ids = category?.let { key -> groups.firstOrNull { it.key == key }?.ids ?: emptyList() }
             RowsKey(ids, favs, q, hidden)
         }
             .combine(selectedSource) { key, source -> key to source }
@@ -377,6 +379,7 @@ class ChannelsViewModel(app: Application) : AndroidViewModel(app) {
                 val channelFlow = when {
                     key.query.isNotBlank() -> graph.catalogRepository.searchChannels(key.query)
                     key.favs -> graph.catalogRepository.observeFavouriteChannels()
+                    key.categoryIds != null && key.categoryIds.isEmpty() -> flowOf(emptyList())
                     key.categoryIds != null -> graph.catalogRepository.observeChannelsIn(key.categoryIds)
                     else -> graph.catalogRepository.observeChannels(source)
                 }

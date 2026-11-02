@@ -166,6 +166,9 @@ class CatalogRepository(
 
     fun observeCategories(kind: StreamKind): Flow<List<Category>> = categoryDao.observe(kind)
 
+    fun observeCategoriesWithVisibleChannels(kind: StreamKind): Flow<List<Category>> =
+        categoryDao.observeWithVisibleChannels(kind)
+
     fun observeMovies(categoryId: String? = null): Flow<List<Movie>> = movieDao.observe(categoryId)
 
     fun observeSeries(categoryId: String? = null): Flow<List<Series>> = seriesDao.observe(categoryId)

@@ -296,6 +296,22 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE kind = :kind ORDER BY sortIndex, name")
     fun observe(kind: StreamKind): Flow<List<Category>>
 
+    /** Categories that still contain at least one channel visible to the guide. */
+    @Query(
+        """
+        SELECT categories.* FROM categories
+        WHERE kind = :kind
+          AND EXISTS (
+              SELECT 1 FROM channels
+              WHERE channels.sourceId = categories.sourceId
+                AND channels.categoryId = categories.id
+                AND channels.hidden = 0
+          )
+        ORDER BY sortIndex, name
+        """
+    )
+    fun observeWithVisibleChannels(kind: StreamKind): Flow<List<Category>>
+
     /** One-shot list of every category of a kind, ordered like [observe] — the web manager reads
      * the live categories once per request rather than subscribing to a Flow. */
     @Query("SELECT * FROM categories WHERE kind = :kind ORDER BY sortIndex, name")

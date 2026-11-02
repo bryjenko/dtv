@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4
+
+- **Hidden channel groups stay hidden in Live TV.** The category list now drops groups with no
+  visible channels, and a stale selection stays empty instead of falling back to the full playlist.
+
 ## 1.3
 
 - **Update over D-TV 1.2.** Uses the same app ID and persistent signing key as v1.2 so Android can
