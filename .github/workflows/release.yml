@@ -40,6 +40,14 @@ jobs:
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
+      - name: Verify upload key alias
+        if: env.KEYSTORE_PATH != ''
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          keytool -list -keystore "$KEYSTORE_PATH" -storetype PKCS12 -storepass "$KEYSTORE_PASSWORD" \
+            | sed -n 's/,.*//p' | tail -n 1
+
       - name: Assemble release APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
