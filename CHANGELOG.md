@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5
+
+- **More screen space.** The app interface is scaled down slightly across screens.
+- **Easier settings navigation.** Choose a language from a separate list, and edit the TMDB key
+  in a dialog so its keyboard doesn't interrupt scrolling through settings.
+- **Clearer About controls.** Focused options now have a brighter blue highlight.
+
 ## 1.4
 
 - **Hidden channel groups stay hidden in Live TV.** The category list now drops groups with no

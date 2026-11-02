@@ -16,9 +16,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
@@ -30,6 +34,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -68,6 +73,7 @@ fun AppSettingsScreen(onBack: () -> Unit) {
     val liveEnabled by settings.liveEnabled.collectAsState()
     val moviesEnabled by settings.moviesEnabled.collectAsState()
     val seriesEnabled by settings.seriesEnabled.collectAsState()
+    var showLanguagePicker by remember { mutableStateOf(false) }
 
     // A refresh next to each content toggle kicks a full catalogue re-sync (which now honours the
     // toggles, so a type just switched on is fetched). Runs as background work so it isn't cut short
@@ -145,18 +151,44 @@ fun AppSettingsScreen(onBack: () -> Unit) {
         Spacer(Modifier.height(16.dp))
 
         SettingsSection(stringResource(R.string.settings_section_language)) {
-            ThemeOption(stringResource(R.string.settings_language_system), language.isBlank()) {
-                changeLanguage(context, settings, "")
-            }
-            // Each language is listed in its own name (endonym), the convention users expect.
-            OpenTvLanguages.forEach { (tag, name) ->
-                ThemeOption(name, language == tag) { changeLanguage(context, settings, tag) }
+            val selectedLanguage = OpenTvLanguages.firstOrNull { it.first == language }
+                ?.second ?: stringResource(R.string.settings_language_system)
+            OutlinedButton(onClick = { showLanguagePicker = true }) {
+                Text("${stringResource(R.string.settings_language_choose)}: $selectedLanguage")
             }
             Spacer(Modifier.height(4.dp))
             Text(
                 stringResource(R.string.settings_language_note),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        if (showLanguagePicker) {
+            AlertDialog(
+                onDismissRequest = { showLanguagePicker = false },
+                title = { Text(stringResource(R.string.settings_section_language)) },
+                text = {
+                    LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                        item {
+                            ThemeOption(stringResource(R.string.settings_language_system), language.isBlank()) {
+                                showLanguagePicker = false
+                                changeLanguage(context, settings, "")
+                            }
+                        }
+                        items(OpenTvLanguages) { (tag, name) ->
+                            ThemeOption(name, language == tag) {
+                                showLanguagePicker = false
+                                changeLanguage(context, settings, tag)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showLanguagePicker = false }) {
+                        Text(stringResource(R.string.common_done))
+                    }
+                },
             )
         }
 
@@ -227,6 +259,7 @@ private fun TmdbKeySection(settings: AppSettings) {
     val context = LocalContext.current
     val savedKey by settings.tmdbApiKey.collectAsState()
     var field by remember(savedKey) { mutableStateOf(savedKey) }
+    var editing by remember { mutableStateOf(false) }
     val savedMessage = stringResource(R.string.settings_tmdb_saved)
 
     SettingsSection(stringResource(R.string.settings_section_metadata)) {
@@ -236,28 +269,45 @@ private fun TmdbKeySection(settings: AppSettings) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = field,
-            onValueChange = { field = it.trim() },
-            singleLine = true,
-            label = { Text(stringResource(R.string.settings_tmdb_key_label)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedButton(onClick = {
-                settings.setTmdbApiKey(field)
-                Toast.makeText(context, savedMessage, Toast.LENGTH_SHORT).show()
-            }) { Text(stringResource(R.string.settings_tmdb_save)) }
-            if (savedKey.isNotBlank()) {
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    stringResource(R.string.settings_tmdb_active),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+        OutlinedButton(onClick = { field = savedKey; editing = true }) {
+            Text(stringResource(R.string.settings_tmdb_edit))
         }
+        Spacer(Modifier.height(8.dp))
+        if (savedKey.isNotBlank()) {
+            Text(
+                stringResource(R.string.settings_tmdb_active),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+
+    if (editing) {
+        AlertDialog(
+            onDismissRequest = { editing = false },
+            title = { Text(stringResource(R.string.settings_tmdb_key_label)) },
+            text = {
+                OutlinedTextField(
+                    value = field,
+                    onValueChange = { field = it },
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.settings_tmdb_key_label)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    settings.setTmdbApiKey(field.trim())
+                    Toast.makeText(context, savedMessage, Toast.LENGTH_SHORT).show()
+                    editing = false
+                }) { Text(stringResource(R.string.settings_tmdb_save)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { editing = false }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            },
+        )
     }
 }
 

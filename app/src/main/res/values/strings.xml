@@ -179,6 +179,7 @@
     <string name="settings_language_system">System default</string>
     <string name="settings_language_english">English</string>
     <string name="settings_language_spanish">Español</string>
+    <string name="settings_language_choose">Choose language</string>
     <string name="settings_language_note">Sets the app\'s language. The screen reloads when you change it.</string>
     <string name="settings_section_guide">Guide</string>
     <string name="settings_channel_layout_title">Channel layout</string>
@@ -507,6 +508,7 @@
     <string name="settings_section_metadata">Metadata</string>
     <string name="settings_tmdb_note">Paste your own free TMDB API key to fill in missing posters, backdrops, cast and synopses on Movies &amp; Shows. It stays on this device.</string>
     <string name="settings_tmdb_key_label">TMDB API key</string>
+    <string name="settings_tmdb_edit">Set or edit API key</string>
     <string name="settings_tmdb_save">Save key</string>
     <string name="settings_tmdb_saved">TMDB key saved</string>
     <string name="settings_tmdb_active">Active</string>

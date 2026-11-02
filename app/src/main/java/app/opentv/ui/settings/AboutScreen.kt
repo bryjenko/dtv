@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -39,6 +41,8 @@ fun AboutScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var updateLine by remember { mutableStateOf<String?>(null) }
     var checking by remember { mutableStateOf(false) }
+    var checkFocused by remember { mutableStateOf(false) }
+    var doneFocused by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 32.dp, vertical = 24.dp)) {
         Text(stringResource(R.string.about_title), style = MaterialTheme.typography.headlineMedium)
@@ -50,6 +54,11 @@ fun AboutScreen(onBack: () -> Unit) {
         )
         Spacer(Modifier.height(16.dp))
         OutlinedButton(
+            modifier = Modifier.onFocusChanged { checkFocused = it.isFocused },
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = if (checkFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                contentColor = if (checkFocused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+            ),
             enabled = !checking,
             onClick = {
                 checking = true
@@ -83,6 +92,13 @@ fun AboutScreen(onBack: () -> Unit) {
             Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
         }
         Spacer(Modifier.weight(1f))
-        OutlinedButton(onClick = onBack) { Text(stringResource(R.string.common_done)) }
+        OutlinedButton(
+            onClick = onBack,
+            modifier = Modifier.onFocusChanged { doneFocused = it.isFocused },
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = if (doneFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                contentColor = if (doneFocused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+            ),
+        ) { Text(stringResource(R.string.common_done)) }
     }
 }

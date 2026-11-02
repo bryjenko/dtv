@@ -48,8 +48,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -98,6 +101,7 @@ class MainActivity : ComponentActivity() {
         val isTelevision = isRunningOnTelevision(this)
 
         setContent {
+            val systemDensity = LocalDensity.current
             val settings = remember { ServiceLocator.get(this).settings }
             val themeMode by settings.themeMode.collectAsState()
             val darkTheme = when (themeMode) {
@@ -106,12 +110,19 @@ class MainActivity : ComponentActivity() {
                 // A living-room screen defaults to dark; a phone/tablet follows the system.
                 AppSettings.ThemeMode.SYSTEM -> isTelevision || isSystemInDarkTheme()
             }
-            OpenTvTheme(darkTheme = darkTheme) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    OpenTvApp(isTelevision = isTelevision)
+            CompositionLocalProvider(
+                LocalDensity provides Density(
+                    density = systemDensity.density * APP_UI_SCALE,
+                    fontScale = systemDensity.fontScale,
+                ),
+            ) {
+                OpenTvTheme(darkTheme = darkTheme) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background,
+                    ) {
+                        OpenTvApp(isTelevision = isTelevision)
+                    }
                 }
             }
         }
@@ -174,6 +185,7 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val APP_UI_SCALE = 0.9f
         /** A reminder notification carries the channel to tune to in this extra. */
         const val EXTRA_PLAY_CHANNEL = "opentv.play_channel"
 
