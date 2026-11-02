@@ -40,18 +40,22 @@ jobs:
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
-      - name: Verify upload key alias
+      - name: Configure upload key alias
         if: env.KEYSTORE_PATH != ''
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          keytool -list -keystore "$KEYSTORE_PATH" -storetype PKCS12 -storepass "$KEYSTORE_PASSWORD" \
-            | sed -n 's/,.*//p' | tail -n 1
+          KEY_ALIAS="$(keytool -list -v -keystore "$KEYSTORE_PATH" -storetype PKCS12 -storepass "$KEYSTORE_PASSWORD" \
+            | awk -F': ' '/Alias name:/{alias=$2} /Entry type: PrivateKeyEntry/{print alias; exit}')"
+          if [ -z "$KEY_ALIAS" ]; then
+            echo "::error::No private key alias found in the upload keystore"
+            exit 1
+          fi
+          echo "KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
 
       - name: Assemble release APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
