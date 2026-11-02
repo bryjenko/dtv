@@ -409,6 +409,10 @@
     <string name="channels_manager_pick_category">Pick a category on the left to see its channels.</string>
     <string name="channels_manager_empty_category">No channels in this category.</string>
     <string name="channels_manager_no_channels">No channels yet. Add a provider first.</string>
+    <string name="channels_manager_group_visibility">Show channels in this group</string>
+    <string name="channels_manager_group_hidden">All channels in this group are hidden</string>
+    <string name="channels_manager_group_partial">Some channels in this group are hidden</string>
+    <string name="channels_manager_group_showing">All channels in this group are showing</string>
     <string name="channels_hidden">Hidden</string>
     <string name="channels_showing">Showing</string>
     <string name="channels_show">Show</string>

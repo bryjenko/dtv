@@ -53,6 +53,7 @@ object ManagerPage {
           .cat .label { flex:1; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
           .cat .count { color:var(--muted); font-size:.85rem; font-variant-numeric:tabular-nums; }
           .cat .chev { color:var(--muted); }
+          .cat .group-eye { flex:none; }
           .row { display:flex; align-items:center; gap:11px; padding:10px 12px;
                  background:var(--surface); border:1px solid var(--line); border-radius:12px; }
           .row.hidden { opacity:.55; }
@@ -267,9 +268,38 @@ object ManagerPage {
               var row = document.createElement('div');
               row.className = 'cat';
               var label = document.createElement('span'); label.className = 'label'; label.textContent = c.label;
-              var count = document.createElement('span'); count.className = 'count'; count.textContent = c.count;
+              var count = document.createElement('span'); count.className = 'count';
+              function refreshCategoryCount(){
+                count.textContent = c.hiddenCount ? c.count + ' · ' + c.hiddenCount + ' hidden' : c.count;
+              }
+              refreshCategoryCount();
+              var eye = document.createElement('button');
+              eye.type = 'button';
+              eye.className = 'btn group-eye' + (c.hiddenCount < c.count ? ' on' : '');
+              function refreshCategoryEye(){
+                var allHidden = c.hiddenCount >= c.count;
+                eye.className = 'btn group-eye' + (allHidden ? '' : ' on');
+                eye.innerHTML = allHidden ? '&#128584;' : '&#128065;';
+                eye.title = allHidden ? 'All hidden — tap to show category' : 'Showing — tap to hide category';
+                eye.setAttribute('aria-label', eye.title);
+              }
+              refreshCategoryEye();
+              eye.onclick = function(e){
+                e.stopPropagation();
+                var target = c.hiddenCount < c.count;
+                eye.disabled = true;
+                post('/category', { id: c.id, sourceId: c.sourceId, hidden: target })
+                  .then(function(){
+                    c.hiddenCount = target ? c.count : 0;
+                    refreshCategoryEye();
+                    refreshCategoryCount();
+                    setStatus(target ? 'Category hidden from the guide' : 'Category showing in the guide', 'ok');
+                  })
+                  .catch(function(){ setStatus(UNREACH, 'err'); })
+                  .finally(function(){ eye.disabled = false; });
+              };
               var chev = document.createElement('span'); chev.className = 'chev'; chev.innerHTML = '&#8250;';
-              row.appendChild(label); row.appendChild(count); row.appendChild(chev);
+              row.appendChild(label); row.appendChild(count); row.appendChild(eye); row.appendChild(chev);
               row.onclick = function(){ openCategory(c); };
               list.appendChild(row);
             });

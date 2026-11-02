@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2
+
+- **Hide or show a whole channel group.** The TV channel manager now has a group-wide switch while
+  retaining each channel's individual control. The QR phone manager has a hide/show button for each
+  category and shows how many channels in it are hidden.
+- **Faster TV navigation.** Selecting Live TV moves focus into its category list; selecting a list
+  moves focus into its channels. Press LEFT to return to the previous area.
+- **Remote select behaves naturally.** A short press on a channel starts playback; holding Select
+  toggles that channel as a favourite.
+
 ## 1.0
 
 - First D-TV release from the independent `bryjenko/dtv` code line.

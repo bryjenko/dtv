@@ -208,7 +208,10 @@ fun ChannelManagerScreen(
                         hasCategories = categoryGroups.isNotEmpty(),
                         categorySelected = selectedCategory != null,
                         rows = browseRows,
+                        allHidden = browseRows.isNotEmpty() && browseRows.all { row -> row.variants.all { it.hidden } },
+                        anyHidden = browseRows.any { row -> row.variants.any { it.hidden } },
                         onExitLeft = onExitLeftToRail,
+                        onToggleGroup = { currentlyHidden -> viewModel.setManagerGroupHidden(!currentlyHidden) },
                         onToggleHidden = { row, hidden -> viewModel.setRowHidden(row, !hidden) },
                         onToggleFavourite = { viewModel.toggleFavourite(it) },
                     )
@@ -260,7 +263,10 @@ private fun BrowsePane(
     hasCategories: Boolean,
     categorySelected: Boolean,
     rows: List<ChannelsViewModel.Row>,
+    allHidden: Boolean,
+    anyHidden: Boolean,
     onExitLeft: () -> Boolean,
+    onToggleGroup: (Boolean) -> Unit,
     onToggleHidden: (ChannelsViewModel.Row, Boolean) -> Unit,
     onToggleFavourite: (ChannelsViewModel.Row) -> Unit,
 ) {
@@ -272,6 +278,28 @@ private fun BrowsePane(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
+            item {
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.channels_manager_group_visibility), fontWeight = FontWeight.SemiBold)
+                        Text(
+                            stringResource(
+                                when {
+                                    allHidden -> R.string.channels_manager_group_hidden
+                                    anyHidden -> R.string.channels_manager_group_partial
+                                    else -> R.string.channels_manager_group_showing
+                                },
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = !allHidden, onCheckedChange = { onToggleGroup(allHidden) })
+                }
+            }
             items(rows, key = { it.key }) { row ->
                 val hidden = row.variants.all { it.hidden }
                 ManagerRow(

@@ -42,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -88,6 +90,7 @@ fun GuideGrid(
     // Returns true if it handled the key (rail was hidden, so consume it); false to let normal
     // left-navigation carry focus into the already-visible rail.
     onExitLeftFromChannel: () -> Boolean = { false },
+    firstRowFocusRequester: FocusRequester? = null,
     dayOffset: Int = 0,
     modifier: Modifier = Modifier,
 ) {
@@ -118,6 +121,7 @@ fun GuideGrid(
                     onProgramme = { programme -> onProgramme(row, programme) },
                     onToggleFavourite = { onToggleFavourite(row) },
                     onExitLeft = onExitLeftFromChannel,
+                    focusRequester = if (row.key == rows.firstOrNull()?.key) firstRowFocusRequester else null,
                 )
             }
         }
@@ -139,6 +143,7 @@ fun ChannelList(
     onFocusRow: (ChannelsViewModel.Row) -> Unit,
     onToggleFavourite: (ChannelsViewModel.Row) -> Unit = {},
     onExitLeftFromChannel: () -> Boolean = { false },
+    firstRowFocusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier,
 ) {
     val now = System.currentTimeMillis()
@@ -156,6 +161,7 @@ fun ChannelList(
                 onFocus = { onFocusRow(row) },
                 onToggleFavourite = { onToggleFavourite(row) },
                 onExitLeft = onExitLeftFromChannel,
+                focusRequester = if (row.key == rows.firstOrNull()?.key) firstRowFocusRequester else null,
             )
         }
     }
@@ -170,6 +176,7 @@ private fun ChannelListRow(
     onFocus: () -> Unit,
     onToggleFavourite: () -> Unit,
     onExitLeft: () -> Boolean,
+    focusRequester: FocusRequester?,
 ) {
     var focused by remember { mutableStateOf(false) }
     Row(
@@ -184,6 +191,7 @@ private fun ChannelListRow(
                 if (focused) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
                 else Modifier,
             )
+            .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
             // LEFT from a row reopens the collapsed rail, exactly like the grid's channel column.
             .onPreviewKeyEvent { e ->
                 if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionLeft) onExitLeft() else false
@@ -192,7 +200,7 @@ private fun ChannelListRow(
                 focused = it.isFocused
                 if (it.isFocused) onFocus()
             }
-            .clickable(onClick = onSelect)
+            .remoteSelectOrLongSelect(onSelect = onSelect, onLongSelect = onToggleFavourite)
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -320,6 +328,7 @@ private fun GuideRow(
     onProgramme: (Programme) -> Unit,
     onToggleFavourite: () -> Unit = {},
     onExitLeft: () -> Boolean = { false },
+    focusRequester: FocusRequester? = null,
 ) {
     // Focus (the d-pad border) just moves the highlight. Selection (the filled cell) is the
     // channel the preview is playing — it only changes when you press OK.
@@ -342,6 +351,7 @@ private fun GuideRow(
                         2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp),
                     ) else Modifier,
                 )
+                .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
                 // LEFT from this leftmost column asks the host to reopen the collapsed category
                 // rail; onExitLeft consumes the key only when it handled it (rail was hidden), so
                 // moving left onto programme blocks and into an already-visible rail still works.
@@ -353,7 +363,7 @@ private fun GuideRow(
                     focused = it.isFocused
                     if (it.isFocused) onFocus()
                 }
-                .clickable(onClick = onSelect)
+                .remoteSelectOrLongSelect(onSelect = onSelect, onLongSelect = onToggleFavourite)
                 .padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

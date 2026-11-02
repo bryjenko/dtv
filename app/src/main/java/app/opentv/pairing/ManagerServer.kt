@@ -223,6 +223,8 @@ class ManagerServer(
 
             method == "POST" && path == "/channel" -> handleChannelPatch(output, body)
 
+            method == "POST" && path == "/category" -> handleCategoryPatch(output, body)
+
             method == "POST" && path == "/reorder" -> handleReorder(output, body)
 
             method == "GET" && path == "/recording" ->
@@ -265,7 +267,13 @@ class ManagerServer(
             .mapNotNull { cat ->
                 val count = counts[cat.sourceId to cat.id] ?: 0
                 if (count <= 0) null
-                else CategoryDto(id = cat.id, label = cat.name, sourceId = cat.sourceId, count = count)
+                else CategoryDto(
+                    id = cat.id,
+                    label = cat.name,
+                    sourceId = cat.sourceId,
+                    count = count,
+                    hiddenCount = counts[cat.sourceId to cat.id]?.hiddenCount ?: 0,
+                )
             }
         json.encodeToString(
             MetaDto.serializer(),
@@ -296,6 +304,19 @@ class ManagerServer(
             patch.favourite?.let { catalog.setChannelFavourite(patch.id, it) }
             // A blank name clears the rename back to the provider's own (see setChannelCustomName).
             patch.name?.let { catalog.setChannelCustomName(patch.id, it) }
+        }
+        writeOk(output)
+    }
+
+    /** `POST /category {id, sourceId, hidden}` → show or hide every channel in one category. */
+    private fun handleCategoryPatch(output: OutputStream, body: String) {
+        val patch = runCatching { json.decodeFromString(CategoryPatch.serializer(), body) }.getOrNull()
+        if (patch == null || patch.id.isBlank() || patch.sourceId <= 0L) {
+            output.write(PairingHttp.httpResponse("400 Bad Request", "text/plain", "Bad request."))
+            return
+        }
+        runBlocking {
+            catalog.setChannelsHiddenInCategories(patch.sourceId, listOf(patch.id), patch.hidden)
         }
         writeOk(output)
     }
@@ -498,7 +519,15 @@ class ManagerServer(
 
 @Serializable private data class SourceDto(val id: Long, val name: String)
 
-@Serializable private data class CategoryDto(val id: String, val label: String, val sourceId: Long, val count: Int)
+@Serializable private data class CategoryDto(
+    val id: String,
+    val label: String,
+    val sourceId: Long,
+    val count: Int,
+    val hiddenCount: Int,
+)
+
+@Serializable private data class CategoryPatch(val id: String, val sourceId: Long, val hidden: Boolean)
 
 @Serializable private data class ChannelDto(
     val id: Long,

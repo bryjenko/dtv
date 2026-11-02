@@ -115,6 +115,7 @@ fun HomeScreen(
     onAddSource: () -> Unit,
     onRefresh: () -> Unit,
     onPlayCatchup: (mediaKey: String, url: String, title: String, ua: String) -> Unit = { _, _, _, _ -> },
+    focusContentRequest: Int = 0,
     viewModel: ChannelsViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -176,6 +177,8 @@ fun HomeScreen(
     // Set when LEFT reopens the rail; the effect waits for the rail to be laid out again before
     // moving focus onto it — a just-revealed node isn't focusable on the very same frame.
     var pendingRailFocus by remember { mutableStateOf(false) }
+    var pendingGuideFocus by remember { mutableStateOf(false) }
+    val guideFocusRequester = remember { FocusRequester() }
     LaunchedEffect(pendingRailFocus) {
         if (pendingRailFocus) {
             delay(50)
@@ -183,6 +186,27 @@ fun HomeScreen(
             // be composed; a second LEFT press then still reaches the rail by ordinary navigation.
             runCatching { railFocusRequester.requestFocus() }
             pendingRailFocus = false
+        }
+    }
+
+    // Selecting Live TV in the main rail lands directly on its category rail. This avoids making
+    // remote users press RIGHT just to enter the screen they already selected.
+    LaunchedEffect(focusContentRequest, categories.isNotEmpty()) {
+        if (focusContentRequest > 0 && categories.isNotEmpty()) {
+            delay(80)
+            runCatching { railFocusRequester.requestFocus() }
+        }
+    }
+
+    // Selecting a category on the rail moves straight into its channel list. LEFT from there
+    // still reopens the rail through the existing onExitLeft handler.
+    LaunchedEffect(pendingGuideFocus, selectedCategory, rows.firstOrNull()?.key) {
+        if (pendingGuideFocus && rows.isNotEmpty()) {
+            delay(80)
+            if (runCatching { guideFocusRequester.requestFocus() }.isSuccess) {
+                railExpanded = false
+                pendingGuideFocus = false
+            }
         }
     }
 
@@ -331,14 +355,14 @@ fun HomeScreen(
                         RailEntry(
                             label = stringResource(R.string.channels_manager_all_sources),
                             selected = selectedSource == null,
-                            onClick = { viewModel.selectSource(null) },
+                            onClick = { viewModel.selectSource(null); pendingGuideFocus = true },
                         )
                     }
                     items(sources, key = { "src-${it.id}" }) { source ->
                         RailEntry(
                             label = source.name,
                             selected = selectedSource == source.id,
-                            onClick = { viewModel.selectSource(source.id) },
+                            onClick = { viewModel.selectSource(source.id); pendingGuideFocus = true },
                         )
                     }
                     item(key = "provider-divider") { Spacer(Modifier.height(10.dp)) }
@@ -349,7 +373,7 @@ fun HomeScreen(
                     RailEntry(
                         label = stringResource(R.string.guide_favourites),
                         selected = favouritesOnly,
-                        onClick = viewModel::selectFavourites,
+                        onClick = { viewModel.selectFavourites(); pendingGuideFocus = true },
                         modifier = if (favouritesOnly) Modifier.focusRequester(railFocusRequester) else Modifier,
                     )
                 }
@@ -358,7 +382,7 @@ fun HomeScreen(
                     RailEntry(
                         label = stringResource(R.string.guide_all_channels),
                         selected = allSelected,
-                        onClick = { viewModel.selectCategory(null) },
+                        onClick = { viewModel.selectCategory(null); pendingGuideFocus = true },
                         modifier = if (allSelected) Modifier.focusRequester(railFocusRequester) else Modifier,
                     )
                 }
@@ -367,7 +391,7 @@ fun HomeScreen(
                     RailEntry(
                         label = group.label,
                         selected = groupSelected,
-                        onClick = { viewModel.selectCategory(group.key) },
+                        onClick = { viewModel.selectCategory(group.key); pendingGuideFocus = true },
                         modifier = if (groupSelected) Modifier.focusRequester(railFocusRequester) else Modifier,
                     )
                 }
@@ -452,10 +476,11 @@ fun HomeScreen(
                     ChannelList(
                         rows = rows,
                         selectedKey = highlightedRow?.key,
-                        onSelectRow = { row -> channelMenu = row },
+                        onSelectRow = { row -> requestLive(row.primary) },
                         onFocusRow = onFocusChannel,
                         onToggleFavourite = { viewModel.toggleFavourite(it) },
                         onExitLeftFromChannel = onExitLeftChannel,
+                        firstRowFocusRequester = guideFocusRequester,
                         modifier = Modifier.weight(1f).padding(start = 12.dp, end = 12.dp),
                     )
                 } else {
@@ -466,11 +491,12 @@ fun HomeScreen(
                         selectedKey = highlightedRow?.key,
                         // OK on a channel opens its menu: Watch, Record now, Schedule a later show,
                         // Record series. The preview already follows the highlight as you browse.
-                        onSelectRow = { row -> channelMenu = row },
+                        onSelectRow = { row -> requestLive(row.primary) },
                         onFocusRow = onFocusChannel,
                         onProgramme = { row, programme -> recordTarget = row to programme },
                         onToggleFavourite = { viewModel.toggleFavourite(it) },
                         onExitLeftFromChannel = onExitLeftChannel,
+                        firstRowFocusRequester = guideFocusRequester,
                         modifier = Modifier.weight(1f).padding(start = 12.dp, end = 12.dp),
                     )
                 }

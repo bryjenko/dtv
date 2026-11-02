@@ -46,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -125,6 +126,7 @@ fun MainScreen(
     val homeTab = visibleTabs.first()
 
     var tab by remember { mutableStateOf(homeTab) }
+    var liveFocusRequest by remember { mutableIntStateOf(1) }
 
     // If the selected tab gets hidden (its type toggled off while it's open), drop back to the
     // home tab so the content area never tries to show a tab that's no longer there.
@@ -164,7 +166,10 @@ fun MainScreen(
         NavRail(
             tabs = visibleTabs,
             current = tab,
-            onSelect = { tab = it },
+            onSelect = {
+                tab = it
+                if (it == Tab.LIVE) liveFocusRequest++
+            },
             onOpenSearch = onOpenSearch,
             onOpenSettings = onOpenSettings,
             onOpenProfiles = onOpenProfiles,
@@ -177,6 +182,7 @@ fun MainScreen(
                     isTelevision = isTelevision,
                     hasSources = hasSources,
                     isSyncing = isSyncing,
+                    focusContentRequest = liveFocusRequest,
                     onPlayChannel = onPlayChannel,
                     onAddSource = onAddSource,
                     onRefresh = onRefresh,

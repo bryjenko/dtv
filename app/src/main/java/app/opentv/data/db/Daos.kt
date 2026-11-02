@@ -129,7 +129,8 @@ interface ChannelDao {
      */
     @Query(
         """
-        SELECT sourceId, categoryId, COUNT(*) AS count
+        SELECT sourceId, categoryId, COUNT(*) AS count,
+               SUM(CASE WHEN hidden = 1 THEN 1 ELSE 0 END) AS hiddenCount
         FROM channels
         WHERE categoryId IS NOT NULL
         GROUP BY sourceId, categoryId
@@ -188,6 +189,9 @@ interface ChannelDao {
 
     @Query("UPDATE channels SET hidden = :hidden WHERE id = :id")
     suspend fun setHidden(id: Long, hidden: Boolean)
+
+    @Query("UPDATE channels SET hidden = :hidden WHERE (:sourceId IS NULL OR sourceId = :sourceId) AND categoryId IN (:categoryIds)")
+    suspend fun setHiddenInCategories(sourceId: Long?, categoryIds: List<String>, hidden: Boolean)
 
     @Query("UPDATE channels SET customName = :name WHERE id = :id")
     suspend fun setCustomName(id: Long, name: String?)
@@ -312,7 +316,7 @@ interface CategoryDao {
 data class CategoryName(val id: String, val name: String)
 
 /** Projection for [ChannelDao.channelCountsByCategory]. */
-data class CategoryChannelCount(val sourceId: Long, val categoryId: String, val count: Int)
+data class CategoryChannelCount(val sourceId: Long, val categoryId: String, val count: Int, val hiddenCount: Int)
 
 @Dao
 interface EpgFeedDao {

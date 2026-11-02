@@ -14,8 +14,8 @@ android {
         applicationId = "app.opentv"
         minSdk = 23
         targetSdk = 35
-        versionCode = 21
-        versionName = "1.0"
+        versionCode = 23
+        versionName = "1.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -23,6 +23,7 @@ android {
         create("upload") {
             // Populated from environment variables in CI. Absent locally, which is why the
             // release build type falls back to the debug key below.
+            storeType = "pkcs12"
             val storePath = providers.environmentVariable("KEYSTORE_PATH").orNull
             if (storePath != null) {
                 storeFile = file(storePath)
