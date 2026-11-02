@@ -258,21 +258,22 @@ class ManagerServer(
         val sources = catalog.enabledSources()
         val sourceIds = sources.map { it.id }.toSet()
         val counts = catalog.categoryChannelCounts()
-            .associateBy({ it.sourceId to it.categoryId }, { it.count })
+            .associateBy { it.sourceId to it.categoryId }
         // Only categories that belong to an enabled source AND actually hold channels — an empty
         // category is noise on a phone, and a category count includes hidden rows so it stays > 0
         // for a category whose channels are all hidden (which is exactly what you'd browse to fix).
         val categories = catalog.liveCategories()
             .filter { it.sourceId in sourceIds }
             .mapNotNull { cat ->
-                val count = counts[cat.sourceId to cat.id] ?: 0
+                val categoryCount = counts[cat.sourceId to cat.id]
+                val count = categoryCount?.count ?: 0
                 if (count <= 0) null
                 else CategoryDto(
                     id = cat.id,
                     label = cat.name,
                     sourceId = cat.sourceId,
                     count = count,
-                    hiddenCount = counts[cat.sourceId to cat.id]?.hiddenCount ?: 0,
+                    hiddenCount = categoryCount?.hiddenCount ?: 0,
                 )
             }
         json.encodeToString(

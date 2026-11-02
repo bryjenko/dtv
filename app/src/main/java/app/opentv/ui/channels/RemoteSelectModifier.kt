@@ -6,28 +6,28 @@
 package app.opentv.ui.channels
 
 import android.os.SystemClock
-import android.view.KeyEvent as AndroidKeyEvent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.nativeKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 
 /** A short remote OK selects; holding it favours. Touch users keep tap and long-press behaviour. */
+@OptIn(ExperimentalFoundationApi::class)
 internal fun Modifier.remoteSelectOrLongSelect(
     onSelect: () -> Unit,
     onLongSelect: () -> Unit,
 ): Modifier = composed {
     val selectStartedAt = remember { mutableLongStateOf(0L) }
     onPreviewKeyEvent { event ->
-        val keyCode = event.nativeKeyEvent.keyCode
-        if (keyCode != AndroidKeyEvent.KEYCODE_DPAD_CENTER &&
-            keyCode != AndroidKeyEvent.KEYCODE_ENTER &&
-            keyCode != AndroidKeyEvent.KEYCODE_NUMPAD_ENTER
+        if (event.key != Key.DirectionCenter &&
+            event.key != Key.Enter &&
+            event.key != Key.NumPadEnter
         ) {
             return@onPreviewKeyEvent false
         }
