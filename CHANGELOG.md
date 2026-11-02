@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6
+
+- **Audio diagnostics and focus.** Live playback now requests Android media audio focus. If a
+  channel's audio format has no compatible decoder, the Audio menu reports the format so it can
+  be identified and addressed.
+
 ## 1.5
 
 - **More screen space.** The app interface is scaled down slightly across screens.

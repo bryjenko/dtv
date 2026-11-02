@@ -758,7 +758,25 @@ private fun OptionPanel(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             if (options.isEmpty()) {
-                Text(stringResource(R.string.player_none_available), color = Color.White.copy(alpha = 0.6f), modifier = Modifier.padding(8.dp))
+                val audioFormats = if (panel == Panel.AUDIO) {
+                    tracks.groups
+                        .filter { it.type == C.TRACK_TYPE_AUDIO }
+                        .flatMap { group -> (0 until group.length).mapNotNull { index ->
+                            group.getTrackFormat(index).sampleMimeType
+                        } }
+                        .distinct()
+                } else {
+                    emptyList()
+                }
+                val message = when {
+                    panel != Panel.AUDIO -> stringResource(R.string.player_none_available)
+                    audioFormats.isEmpty() -> stringResource(R.string.player_audio_no_track)
+                    else -> stringResource(
+                        R.string.player_audio_unsupported,
+                        audioFormats.joinToString(),
+                    )
+                }
+                Text(message, color = Color.White.copy(alpha = 0.75f), modifier = Modifier.padding(8.dp))
             }
             options.forEachIndexed { index, option ->
                 OptionRow(
