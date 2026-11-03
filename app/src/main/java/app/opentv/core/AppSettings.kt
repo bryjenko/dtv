@@ -33,6 +33,18 @@ class AppSettings private constructor(context: Context) {
     )
     val uiScale: StateFlow<Float> = _uiScale.asStateFlow()
 
+    enum class LauncherStyle(val label: String) {
+        BLUE("Blue"), SUNSET("Sunset"), ICE("Ice"), NEON("Neon"), CLASSIC("Classic"), RED("Red"),
+    }
+
+    private val _launcherStyle = MutableStateFlow(readLauncherStyle())
+    val launcherStyle: StateFlow<LauncherStyle> = _launcherStyle.asStateFlow()
+
+    fun setLauncherStyle(style: LauncherStyle) {
+        prefs.edit().putString(KEY_LAUNCHER_STYLE, style.name).apply()
+        _launcherStyle.value = style
+    }
+
     private val addonJson = Json { ignoreUnknownKeys = true }
 
     /** Export portable preferences only; granted USB folders and device sync IDs cannot travel. */
@@ -78,6 +90,7 @@ class AppSettings private constructor(context: Context) {
     private fun reloadPortableSettings() {
         _themeMode.value = readThemeMode()
         _uiScale.value = prefs.getFloat(KEY_UI_SCALE, DEFAULT_UI_SCALE).coerceIn(MIN_UI_SCALE, MAX_UI_SCALE)
+        _launcherStyle.value = readLauncherStyle()
         _channelLayout.value = readChannelLayout()
         _subtitlesEnabled.value = prefs.getBoolean(KEY_SUBTITLES, true)
         _guidePreviewVideo.value = prefs.getBoolean(KEY_PREVIEW_VIDEO, true)
@@ -355,6 +368,10 @@ class AppSettings private constructor(context: Context) {
         runCatching { ChannelLayout.valueOf(prefs.getString(KEY_CHANNEL_LAYOUT, null) ?: "") }
             .getOrDefault(ChannelLayout.GRID)
 
+    private fun readLauncherStyle(): LauncherStyle =
+        runCatching { LauncherStyle.valueOf(prefs.getString(KEY_LAUNCHER_STYLE, null) ?: "") }
+            .getOrDefault(LauncherStyle.BLUE)
+
     // ---- Recording ---------------------------------------------------------------------------
 
     /**
@@ -514,10 +531,11 @@ class AppSettings private constructor(context: Context) {
             "content_series", "player_resize_mode", "language_tag", "recording_target",
             "smb_host", "smb_share", "smb_folder", "smb_user", "smb_password",
             "tmdb_api_key", "stremio_addons", "rec_pad_start_min", "rec_pad_end_min",
-            "rec_auto_switch", "live_pause_enabled", "nas_auto_sync",
+            "rec_auto_switch", "live_pause_enabled", "nas_auto_sync", "launcher_style",
         )
         private const val KEY_THEME = "theme_mode"
         private const val KEY_UI_SCALE = "ui_scale"
+        private const val KEY_LAUNCHER_STYLE = "launcher_style"
         private const val KEY_CHANNEL_LAYOUT = "channel_layout"
         private const val KEY_SUBTITLES = "subtitles_enabled"
         private const val KEY_PREVIEW_VIDEO = "guide_preview_video"

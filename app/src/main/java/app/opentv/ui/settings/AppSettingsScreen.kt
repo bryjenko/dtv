@@ -6,6 +6,7 @@
 package app.opentv.ui.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,13 +23,19 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -52,6 +59,7 @@ import kotlin.math.roundToInt
 import app.opentv.R
 import app.opentv.core.AppSettings
 import app.opentv.core.SleepTimer
+import app.opentv.core.LauncherBranding
 import app.opentv.core.findActivity
 import app.opentv.data.work.SyncWorker
 
@@ -75,6 +83,7 @@ fun AppSettingsScreen(onBack: () -> Unit) {
     val liveEnabled by settings.liveEnabled.collectAsState()
     val moviesEnabled by settings.moviesEnabled.collectAsState()
     val seriesEnabled by settings.seriesEnabled.collectAsState()
+    val launcherStyle by settings.launcherStyle.collectAsState()
     var showLanguagePicker by remember { mutableStateOf(false) }
     var showScalePicker by remember { mutableStateOf(false) }
 
@@ -120,6 +129,33 @@ fun AppSettingsScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(12.dp))
             OutlinedButton(onClick = { showScalePicker = true }) {
                 Text(stringResource(R.string.settings_ui_scale_title, (uiScale * 100).roundToInt()))
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        SettingsSection("Google TV launcher banner") {
+            Text(
+                "Choose the D-TV artwork shown in the Google TV apps row. The launcher may take a moment to refresh after you change it.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(10.dp))
+            launcherBannerOptions.chunked(2).forEach { rowOptions ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    rowOptions.forEach { (style, label, resource) ->
+                        LauncherBannerOption(
+                            modifier = Modifier.weight(1f),
+                            label = label,
+                            bannerResource = resource,
+                            selected = launcherStyle == style,
+                        ) {
+                            if (LauncherBranding.apply(context, style)) settings.setLauncherStyle(style)
+                        }
+                    }
+                    if (rowOptions.size == 1) Spacer(Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(8.dp))
             }
         }
 
@@ -284,6 +320,50 @@ fun AppSettingsScreen(onBack: () -> Unit) {
         Spacer(Modifier.height(16.dp))
 
         SleepTimerSection()
+    }
+}
+
+private val launcherBannerOptions = listOf(
+    Triple(AppSettings.LauncherStyle.BLUE, "Blue", R.drawable.banner_blue),
+    Triple(AppSettings.LauncherStyle.SUNSET, "Sunset", R.drawable.banner_sunset),
+    Triple(AppSettings.LauncherStyle.ICE, "Ice", R.drawable.banner_ice),
+    Triple(AppSettings.LauncherStyle.NEON, "Neon", R.drawable.banner_neon),
+    Triple(AppSettings.LauncherStyle.CLASSIC, "Classic", R.drawable.banner_classic),
+    Triple(AppSettings.LauncherStyle.RED, "Red", R.drawable.banner_red),
+)
+
+@Composable
+private fun LauncherBannerOption(
+    modifier: Modifier,
+    label: String,
+    bannerResource: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    var focused by remember { mutableStateOf(false) }
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = modifier
+            .onFocusChanged { focused = it.isFocused }
+            .then(
+                if (selected || focused) Modifier.border(
+                    width = if (focused) 3.dp else 2.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(12.dp),
+                ) else Modifier,
+            ),
+    ) {
+        Image(
+            painter = painterResource(bannerResource),
+            contentDescription = "$label D-TV banner preview",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxWidth().height(96.dp).clip(RoundedCornerShape(10.dp)),
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
+            RadioButton(selected = selected, onClick = onClick)
+            Text(label, style = MaterialTheme.typography.titleMedium)
+        }
     }
 }
 

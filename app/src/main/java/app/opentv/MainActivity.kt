@@ -58,6 +58,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import app.opentv.core.AppSettings
+import app.opentv.core.LauncherBranding
 import app.opentv.core.ServiceLocator
 import app.opentv.data.parser.displayTitle
 import app.opentv.ui.MainScreen
@@ -100,6 +101,8 @@ class MainActivity : ComponentActivity(), app.opentv.ui.settings.MainActivityHos
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         handlePlayIntent(intent)
+        val appSettings = AppSettings.get(this)
+        LauncherBranding.apply(this, appSettings.launcherStyle.value)
         val isTelevision = isRunningOnTelevision(this)
 
         setContent {

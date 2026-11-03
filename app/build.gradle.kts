@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "app.opentv"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 35
         versionCode = 31
         versionName = "2.0"

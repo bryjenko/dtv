@@ -5,6 +5,9 @@
 - **Encrypted Google Drive backup and restore.** Copy provider entries and app preferences to
   the private app data area of Google Drive, protected by a six digit code. Restore on another
   TV using the same Google account and code; provider channel lists refresh after restore.
+- **Choose a Google TV banner.** Pick one of six landscape D-TV designs in Display & Playback;
+  the selection becomes the app's launcher banner.
+- **Android 8.0 minimum.** D-TV now requires Android 8.0 or newer for Google Drive authorization.
 
 ## 1.9
 
