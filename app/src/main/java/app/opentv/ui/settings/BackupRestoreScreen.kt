@@ -43,6 +43,8 @@ import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.Scope
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -87,16 +89,24 @@ fun BackupRestoreScreen(onBack: () -> Unit) {
     }
 
     val authLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            try {
-                val authResult: AuthorizationResult = authClient!!.getAuthorizationResultFromIntent(result.data ?: Intent())
-                authResult.accessToken?.let(::continueWithToken)
-                    ?: run { message = "Google did not provide Drive access." }
-            } catch (e: Exception) {
-                message = e.message ?: "Google account access was cancelled."
+        try {
+            val authResult: AuthorizationResult = authClient!!.getAuthorizationResultFromIntent(result.data ?: Intent())
+            authResult.accessToken?.let(::continueWithToken)
+                ?: run {
+                    message = if (result.resultCode == Activity.RESULT_OK) {
+                        "Google did not provide Drive access."
+                    } else {
+                        "Google did not grant Drive access (result ${result.resultCode}). If you selected an account, D-TV's release signing certificate may need to be registered for Drive access in Google Cloud."
+                    }
+                }
+        } catch (e: ApiException) {
+            message = when (e.statusCode) {
+                CommonStatusCodes.CANCELED -> "Google account access was closed before Drive permission was granted."
+                CommonStatusCodes.DEVELOPER_ERROR -> "Google Drive access is not configured for this D-TV release. Register its app signing certificate in Google Cloud."
+                else -> "Google account access failed (${e.statusCode}): ${e.statusMessage ?: e.message ?: "unknown Google error"}"
             }
-        } else {
-            message = "Google account access was cancelled."
+        } catch (e: Exception) {
+            message = "Could not finish Google account access: ${e.message ?: e.javaClass.simpleName}"
         }
     }
 

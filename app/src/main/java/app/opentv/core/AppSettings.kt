@@ -1,6 +1,6 @@
 /*
- * This file is part of OpenTV.
- * Copyright (C) 2026 The OpenTV Contributors
+ * This file is part of D-TV.
+ * Copyright (C) 2026 The D-TV Contributors
  * Licensed under the GNU General Public License v3.0 or later.
  */
 package app.opentv.core
@@ -111,7 +111,7 @@ class AppSettings private constructor(context: Context) {
         _recordingTarget.value = readRecordingTarget()
         _smbHost.value = prefs.getString(KEY_SMB_HOST, "").orEmpty()
         _smbShare.value = prefs.getString(KEY_SMB_SHARE, "").orEmpty()
-        _smbFolder.value = prefs.getString(KEY_SMB_FOLDER, "OpenTV").orEmpty()
+        _smbFolder.value = prefs.getString(KEY_SMB_FOLDER, "D-TV").orEmpty()
         _smbUser.value = prefs.getString(KEY_SMB_USER, "").orEmpty()
         _smbPassword.value = prefs.getString(KEY_SMB_PASS, "").orEmpty()
         _nasAutoSync.value = prefs.getBoolean(KEY_NAS_AUTO_SYNC, false)
@@ -414,7 +414,7 @@ class AppSettings private constructor(context: Context) {
     val smbShare: StateFlow<String> = _smbShare.asStateFlow()
 
     /** Sub-folder within the share, e.g. `Recordings`. Blank = share root. */
-    private val _smbFolder = MutableStateFlow(prefs.getString(KEY_SMB_FOLDER, "OpenTV").orEmpty())
+    private val _smbFolder = MutableStateFlow(prefs.getString(KEY_SMB_FOLDER, "D-TV").orEmpty())
     val smbFolder: StateFlow<String> = _smbFolder.asStateFlow()
 
     private val _smbUser = MutableStateFlow(prefs.getString(KEY_SMB_USER, "").orEmpty())
@@ -497,7 +497,7 @@ class AppSettings private constructor(context: Context) {
     // ---- Stremio add-ons ---------------------------------------------------------------------
 
     /**
-     * The user's Stremio add-ons, stored on-device as JSON. OpenTV ships with none; each entry is a
+     * The user's Stremio add-ons, stored on-device as JSON. D-TV ships with none; each entry is a
      * manifest URL the user pasted (a debrid key, if any, is baked into that URL on the add-on's own
      * site — never entered here). Empty = the whole feature stays inert.
      */

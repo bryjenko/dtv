@@ -14,6 +14,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -110,6 +112,15 @@ fun MainScreen(
     // there is always at least one tab and never a blank shell, even with all three types off.
     val context = LocalContext.current
     val settings = remember { AppSettings.get(context) }
+    val launcherStyle by settings.launcherStyle.collectAsState()
+    val bannerResource = when (launcherStyle) {
+        AppSettings.LauncherStyle.BLUE -> R.drawable.banner_blue
+        AppSettings.LauncherStyle.SUNSET -> R.drawable.banner_sunset
+        AppSettings.LauncherStyle.ICE -> R.drawable.banner_ice
+        AppSettings.LauncherStyle.NEON -> R.drawable.banner_neon
+        AppSettings.LauncherStyle.CLASSIC -> R.drawable.banner_classic
+        AppSettings.LauncherStyle.RED -> R.drawable.banner_red
+    }
     val liveEnabled by settings.liveEnabled.collectAsState()
     val moviesEnabled by settings.moviesEnabled.collectAsState()
     val seriesEnabled by settings.seriesEnabled.collectAsState()
@@ -166,6 +177,7 @@ fun MainScreen(
         NavRail(
             tabs = visibleTabs,
             current = tab,
+            bannerResource = bannerResource,
             onSelect = {
                 tab = it
                 if (it == Tab.LIVE) liveFocusRequest++
@@ -263,6 +275,7 @@ private fun StatusBar() {
 private fun NavRail(
     tabs: List<Tab>,
     current: Tab,
+    bannerResource: Int,
     onSelect: (Tab) -> Unit,
     onOpenSearch: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -287,28 +300,19 @@ private fun NavRail(
             .padding(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        // Brand: the logo mark alone when collapsed, the mark + "OpenTV" wordmark when open. The
-        // name stays on purpose — it's what people search for.
+        // Use the same artwork as the selected TV launcher banner for a consistent D-TV brand.
         Row(
-            Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
+            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
-                painter = painterResource(R.drawable.ic_opentv_logo),
-                contentDescription = "OpenTV",
-                modifier = Modifier.size(34.dp),
+                painter = painterResource(bannerResource),
+                contentDescription = "D-TV",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .width(if (expanded) 204.dp else 48.dp)
+                    .aspectRatio(16f / 9f),
             )
-            if (expanded) {
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    "OpenTV",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
         }
         Spacer(Modifier.height(8.dp))
 

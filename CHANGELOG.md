@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.2
+
+- **D-TV branding throughout the app.** Remove OpenTV names from app text and replace the home
+  navigation logo with the selected D-TV launcher artwork.
+- **Clearer Google Drive sign-in errors.** Preserve Google authorization status details and explain
+  when the release signing certificate needs to be registered in Google Cloud.
+
 ## 2.0.1
 
 - **Encrypted Google Drive backup and restore.** Copy provider entries and app preferences to
