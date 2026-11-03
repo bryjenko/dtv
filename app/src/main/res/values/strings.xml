@@ -172,6 +172,7 @@
     <string name="settings_theme_note">TV boxes stay dark on \"Follow system\". Pick Dark or Light to force it.</string>
     <string name="settings_ui_scale_title">Interface size: %1$d%%</string>
     <string name="settings_ui_scale_subtitle">Adjust the size of the whole interface. Changes apply immediately.</string>
+    <string name="settings_ui_scale_dialog_title">Choose interface size</string>
     <string name="settings_section_content">Content</string>
     <string name="settings_content_note">Turn off what you don\'t use to sync faster. Turn back on anytime.</string>
     <string name="settings_content_live_subtitle">Channels and the TV guide.</string>

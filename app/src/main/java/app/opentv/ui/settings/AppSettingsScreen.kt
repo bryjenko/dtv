@@ -32,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -77,6 +76,7 @@ fun AppSettingsScreen(onBack: () -> Unit) {
     val moviesEnabled by settings.moviesEnabled.collectAsState()
     val seriesEnabled by settings.seriesEnabled.collectAsState()
     var showLanguagePicker by remember { mutableStateOf(false) }
+    var showScalePicker by remember { mutableStateOf(false) }
 
     // A refresh next to each content toggle kicks a full catalogue re-sync (which now honours the
     // toggles, so a type just switched on is fetched). Runs as background work so it isn't cut short
@@ -118,26 +118,40 @@ fun AppSettingsScreen(onBack: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))
-            Text(
-                stringResource(R.string.settings_ui_scale_title, (uiScale * 100).roundToInt()),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                stringResource(R.string.settings_ui_scale_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Slider(
-                value = uiScale,
-                onValueChange = settings::setUiScale,
-                valueRange = AppSettings.MIN_UI_SCALE..AppSettings.MAX_UI_SCALE,
-                steps = 4,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("75%", style = MaterialTheme.typography.labelMedium)
-                Text("100%", style = MaterialTheme.typography.labelMedium)
+            OutlinedButton(onClick = { showScalePicker = true }) {
+                Text(stringResource(R.string.settings_ui_scale_title, (uiScale * 100).roundToInt()))
             }
+        }
+
+        if (showScalePicker) {
+            AlertDialog(
+                onDismissRequest = { showScalePicker = false },
+                title = { Text(stringResource(R.string.settings_ui_scale_dialog_title)) },
+                text = {
+                    Column {
+                        Text(
+                            stringResource(R.string.settings_ui_scale_subtitle),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        UI_SCALE_OPTIONS.forEach { scale ->
+                            ThemeOption(
+                                label = "${(scale * 100).roundToInt()}%",
+                                selected = uiScale == scale,
+                            ) {
+                                settings.setUiScale(scale)
+                                showScalePicker = false
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showScalePicker = false }) {
+                        Text(stringResource(R.string.common_done))
+                    }
+                },
+            )
         }
 
         Spacer(Modifier.height(16.dp))
@@ -464,6 +478,8 @@ private fun ThemeOption(label: String, selected: Boolean, onSelect: () -> Unit) 
         Text(label, style = MaterialTheme.typography.titleMedium)
     }
 }
+
+private val UI_SCALE_OPTIONS = listOf(0.75f, 0.8f, 0.85f, 0.9f, 0.95f, 1f)
 
 @Composable
 private fun ToggleRow(

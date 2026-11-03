@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9
+
+- **TV-friendly interface size selection.** Choose a size from a remote-friendly list instead of
+  adjusting the scale with a slider.
+
 ## 1.8
 
 - **Adjustable interface size.** Set the overall interface scale from 75% to 100% in Display &
