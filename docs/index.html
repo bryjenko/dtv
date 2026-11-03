@@ -14,7 +14,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Install OpenTV</title>
+<title>Install D-TV</title>
 <meta name="description" content="Free, open-source IPTV player for Google TV, Fire TV, Android TV, phones and tablets.">
 <style>
   :root {
@@ -41,7 +41,8 @@
 
   header { text-align: center; margin-bottom: 44px; }
   .logo {
-    width: 74px; height: 74px; margin: 0 auto 20px; display: block;
+    width: min(320px, 100%); height: auto; margin: 0 auto 20px; display: block;
+    border-radius: 12px;
   }
   h1 { font-size: 2.4rem; margin: 0 0 10px; letter-spacing: -0.02em; }
   .tagline { color: var(--muted); font-size: 1.08rem; margin: 0; }
@@ -164,26 +165,19 @@
 <div class="wrap">
 
   <header>
-    <svg class="logo" viewBox="0 0 108 108" aria-hidden="true">
-      <!-- Aerial -->
-      <path d="M38 20l16 14M70 20l-16 14" stroke="#4b5db8" stroke-width="5" stroke-linecap="round" fill="none"/>
-      <!-- Screen -->
-      <rect x="16" y="34" width="76" height="54" rx="9" fill="#7c93ff"/>
-      <!-- Play mark -->
-      <path d="M46 47l22 14l-22 14z" fill="#07080c"/>
-    </svg>
-    <h1>OpenTV</h1>
+    <img class="logo" src="banners/banner_blue.png" alt="D-TV">
+    <h1>D-TV</h1>
     <p class="tagline">A free, open-source IPTV player for your TV.</p>
     <div class="pills">
-      <span class="pill">No account</span>
+      <span class="pill">No D-TV account</span>
       <span class="pill">No subscription</span>
       <span class="pill">No servers of ours</span>
       <span class="pill">GPL-3.0</span>
     </div>
   </header>
 
-  <img class="hero-shot" src="screenshots/01-guide.png" alt="OpenTV live TV guide with the current channel playing in the preview pane" loading="lazy">
-  <p class="shot-caption">The guide — the channel you're on keeps playing while you browse.</p>
+  <img class="hero-shot" src="banners/banner_blue.png" alt="D-TV landscape launcher design" loading="lazy">
+  <p class="shot-caption">Choose one of six D-TV designs for your Google TV launcher and in-app navigation.</p>
 
   <div class="card" id="release-box">
     <p class="status-line" id="status">Checking for the latest build…</p>
@@ -239,7 +233,7 @@
     <div class="feature">
       <h3>Channel management</h3>
       <ul>
-        <li>Channel Manager: browse by category, hide or favourite</li>
+        <li>Channel Manager: browse by category, hide or favourite channels and whole groups</li>
         <li>Manage from a phone or laptop — rename, reorder, hide, favourite<span class="new">new</span></li>
         <li>Keep multiple providers separate instead of merged</li>
         <li>Parental PIN and hidden categories</li>
@@ -260,24 +254,27 @@
         <li>Xtream login, or an M3U playlist with XMLTV guide</li>
         <li>Set up from your phone by scanning a code, or on the TV</li>
         <li>Free sync between your own devices — favourites, history, even recordings — over your wifi or Tailscale, with no server</li>
+        <li>Encrypted Google Drive configuration backup and restore with a six digit code<span class="new">new</span></li>
+        <li>Six selectable Google TV launcher banners<span class="new">new</span></li>
         <li>Multiple profiles</li>
       </ul>
     </div>
   </div>
 
   <div class="note">
-    <strong>Free, forever.</strong> No account, no subscription, no servers of ours — happy with a
-    coffee, but nothing is ever paywalled. It's open-source (GPL-3.0), self-updating, translated
-    into Spanish, and runs on Android TV, Fire TV, Google TV, phones and tablets.
+    <strong>Free to use.</strong> No D-TV account, no subscription, no D-TV servers. It's
+    open-source (GPL-3.0), self-updating, and runs on Android TV, Fire TV, Google TV, phones and
+    tablets. Google Drive backup needs a one-time OAuth setup; see the repository's backup guide.
   </div>
 
-  <h2>Screenshots</h2>
+  <h2>Launcher designs</h2>
   <div class="gallery">
-    <figure><img src="screenshots/02-recordings.png" alt="Recordings and reminders" loading="lazy"><figcaption>Recordings &amp; reminders</figcaption></figure>
-    <figure><img src="screenshots/04-movies.png" alt="Movies with Continue Watching" loading="lazy"><figcaption>Movies &amp; series, with resume</figcaption></figure>
-    <figure><img src="screenshots/03-cloud-sync.png" alt="Sync between your own devices" loading="lazy"><figcaption>Free sync between your devices</figcaption></figure>
-    <figure><img src="screenshots/05-settings.png" alt="OpenTV settings" loading="lazy"><figcaption>Settings</figcaption></figure>
-    <figure><img src="screenshots/06-about.png" alt="About OpenTV" loading="lazy"><figcaption>About</figcaption></figure>
+    <figure><img src="banners/banner_blue.png" alt="Blue D-TV launcher banner" loading="lazy"><figcaption>Blue</figcaption></figure>
+    <figure><img src="banners/banner_sunset.png" alt="Sunset D-TV launcher banner" loading="lazy"><figcaption>Sunset</figcaption></figure>
+    <figure><img src="banners/banner_ice.png" alt="Ice D-TV launcher banner" loading="lazy"><figcaption>Ice</figcaption></figure>
+    <figure><img src="banners/banner_neon.png" alt="Neon D-TV launcher banner" loading="lazy"><figcaption>Neon</figcaption></figure>
+    <figure><img src="banners/banner_classic.png" alt="Classic D-TV launcher banner" loading="lazy"><figcaption>Classic</figcaption></figure>
+    <figure><img src="banners/banner_red.png" alt="Red D-TV launcher banner" loading="lazy"><figcaption>Red</figcaption></figure>
   </div>
 
   <h2>How to install</h2>
@@ -340,7 +337,7 @@
     <p>Faster and less fiddly if you already use it:</p>
     <ul>
       <li>Enable <span class="path">Developer options → USB debugging</span> on the box.</li>
-      <li>On your computer: <kbd>adb connect &lt;box-ip&gt;:5555</kbd> then <kbd>adb install opentv.apk</kbd></li>
+      <li>On your computer: <kbd>adb connect &lt;box-ip&gt;:5555</kbd> then <kbd>adb install dtv.apk</kbd></li>
     </ul>
   </section>
 
@@ -382,7 +379,7 @@
   </p>
 
   <div class="note">
-    <strong>OpenTV supplies no channels.</strong> It's a player, like VLC. You point it at an
+    <strong>D-TV supplies no channels.</strong> It's a player, like VLC. You point it at an
     IPTV service you already pay for. The project has no affiliation with any provider and
     doesn't help you find one.
   </div>
@@ -393,7 +390,7 @@
       <a href="#" id="issues-link">Report a bug</a> ·
       <a href="#" id="licence-link">GPL-3.0</a>
     </p>
-    <p class="small">Your provider details stay on your device. There is no OpenTV account and no OpenTV server.</p>
+    <p class="small">Your provider details stay on your device except when you choose to back up the encrypted configuration to your Google Drive. D-TV has no account system or servers.</p>
   </footer>
 
 </div>
