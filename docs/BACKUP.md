@@ -25,11 +25,11 @@ pair for the selected Cloud project. Create or correct the Android OAuth client 
 that the `drive.appdata` scope is configured on the consent screen. Debug APKs use a different
 package name and certificate, so a debug client does not authorize the release APK.
 
-To get the release certificate SHA-1 from the APK, download `dtv-v2.0.3.apk` from GitHub Releases
+To get the release certificate SHA-1 from the APK, download `dtv-v2.0.4.apk` from GitHub Releases
 and run this with the JDK's `keytool`:
 
 ```text
-keytool -printcert -jarfile dtv-v2.0.3.apk
+keytool -printcert -jarfile dtv-v2.0.4.apk
 ```
 
 Use the SHA-1 value shown in the output when creating the Android OAuth client. Google documents

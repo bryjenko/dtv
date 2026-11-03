@@ -155,7 +155,7 @@ class DriveBackupStore(private val client: OkHttpClient = OkHttpClient()) {
     private fun findLatest(token: String): String? {
         val q = "name = 'dtv-config.enc' and 'appDataFolder' in parents and trashed = false"
         val encoded = java.net.URLEncoder.encode(q, "UTF-8")
-        val body = execute(Request.Builder().url("$base?q=$encoded&orderBy=modifiedTime%20desc&pageSize=1&fields=files(id)")
+        val body = execute(Request.Builder().url("$base?q=$encoded&spaces=appDataFolder&orderBy=modifiedTime%20desc&pageSize=1&fields=files(id)")
             .header("Authorization", "Bearer $token").get().build()).toString(Charsets.UTF_8)
         return Regex("\"id\"\\s*:\\s*\"([^\"]+)\"").find(body)?.groupValues?.get(1)
     }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.4
+
+- **Google Drive backup lookup.** Search the correct Drive app-data space so D-TV can find and
+  restore its encrypted configuration backup.
+
 ## 2.0.3
 
 - **Independent D-TV Android identity.** The package is now `io.github.bryjenko.dtv`. Android
