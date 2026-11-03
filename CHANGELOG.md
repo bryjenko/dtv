@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0
+
+- **Encrypted Google Drive backup and restore.** Copy provider entries and app preferences to
+  the private app data area of Google Drive, protected by a six digit code. Restore on another
+  TV using the same Google account and code; provider channel lists refresh after restore.
+
 ## 1.9
 
 - **TV-friendly interface size selection.** Choose a size from a remote-friendly list instead of

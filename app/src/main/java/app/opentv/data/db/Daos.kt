@@ -36,6 +36,21 @@ private const val UPSERT_CHUNK = 500
 @Dao
 interface SourceDao {
     @Query("SELECT * FROM sources ORDER BY id")
+    suspend fun all(): List<Source>
+
+    @Query("DELETE FROM sources")
+    suspend fun deleteAll()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(sources: List<Source>)
+
+    @Transaction
+    suspend fun replaceAllForRestore(sources: List<Source>) {
+        deleteAll()
+        if (sources.isNotEmpty()) insertAll(sources)
+    }
+
+    @Query("SELECT * FROM sources ORDER BY id")
     fun observeAll(): Flow<List<Source>>
 
     @Query("SELECT * FROM sources WHERE enabled = 1 ORDER BY id")

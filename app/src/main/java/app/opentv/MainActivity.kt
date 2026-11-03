@@ -86,7 +86,9 @@ import app.opentv.ui.vod.SeriesDetailScreen
 import app.opentv.ui.vod.VodPlayerScreen
 import app.opentv.update.UpdateGate
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), app.opentv.ui.settings.MainActivityHost {
+
+    override fun restartAfterBackupRestore() = recreate()
 
     // Apply the chosen UI language before any view or resource is resolved. A language change in
     // settings calls recreate(), which re-runs this with the new tag.
@@ -209,6 +211,7 @@ object Routes {
     const val PROFILES = "profiles"
     const val PARENTAL = "parental"
     const val SYNC = "sync"
+    const val BACKUP_RESTORE = "backup-restore"
     const val REC_SETTINGS = "recording-settings"
     const val ABOUT = "about"
     const val SERIES_DETAIL = "series/{seriesId}"
@@ -425,6 +428,7 @@ private fun OpenTvApp(isTelevision: Boolean) {
                     onOpenDisplay = { navController.navigate(Routes.APP_SETTINGS) },
                     onOpenParental = { navController.navigate(Routes.PARENTAL) },
                     onOpenSync = { navController.navigate(Routes.SYNC) },
+                    onOpenBackup = { navController.navigate(Routes.BACKUP_RESTORE) },
                     onOpenRecordings = { navController.navigate(Routes.REC_SETTINGS) },
                     onOpenAbout = { navController.navigate(Routes.ABOUT) },
                     onBack = { navController.popBackStack() },
@@ -433,6 +437,10 @@ private fun OpenTvApp(isTelevision: Boolean) {
 
             composable(Routes.SYNC) {
                 SyncScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(Routes.BACKUP_RESTORE) {
+                app.opentv.ui.settings.BackupRestoreScreen(onBack = { navController.popBackStack() })
             }
 
             composable(Routes.REC_SETTINGS) {

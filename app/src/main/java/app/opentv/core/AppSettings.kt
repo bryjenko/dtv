@@ -35,6 +35,77 @@ class AppSettings private constructor(context: Context) {
 
     private val addonJson = Json { ignoreUnknownKeys = true }
 
+    /** Export portable preferences only; granted USB folders and device sync IDs cannot travel. */
+    fun portableBackupValues(): Map<String, String> = prefs.all
+        .filterKeys { it in PORTABLE_KEYS }
+        .mapNotNull { (key, value) ->
+            val encoded = when (value) {
+                is String -> "s:$value"
+                is Boolean -> "b:$value"
+                is Int -> "i:$value"
+                is Long -> "l:$value"
+                is Float -> "f:$value"
+                is Set<*> -> "ss:" + org.json.JSONArray(value.filterIsInstance<String>()).toString()
+                else -> null
+            }
+            encoded?.let { key to it }
+        }.toMap()
+
+    /** Replace portable preferences from a decrypted, version-checked backup. */
+    fun restorePortableBackup(values: Map<String, String>) {
+        val editor = prefs.edit()
+        PORTABLE_KEYS.forEach(editor::remove)
+        values.forEach { (key, encoded) ->
+            if (key !in PORTABLE_KEYS || encoded.length > 200_000) return@forEach
+            runCatching {
+                when {
+                    encoded.startsWith("s:") -> editor.putString(key, encoded.drop(2))
+                    encoded.startsWith("b:") -> editor.putBoolean(key, encoded.drop(2).toBooleanStrict())
+                    encoded.startsWith("i:") -> editor.putInt(key, encoded.drop(2).toInt())
+                    encoded.startsWith("l:") -> editor.putLong(key, encoded.drop(2).toLong())
+                    encoded.startsWith("f:") -> editor.putFloat(key, encoded.drop(2).toFloat())
+                    encoded.startsWith("ss:") -> {
+                        val json = org.json.JSONArray(encoded.drop(3))
+                        editor.putStringSet(key, (0 until json.length()).map { json.getString(it) }.toSet())
+                    }
+                }
+            }
+        }
+        editor.apply()
+        reloadPortableSettings()
+    }
+
+    private fun reloadPortableSettings() {
+        _themeMode.value = readThemeMode()
+        _uiScale.value = prefs.getFloat(KEY_UI_SCALE, DEFAULT_UI_SCALE).coerceIn(MIN_UI_SCALE, MAX_UI_SCALE)
+        _channelLayout.value = readChannelLayout()
+        _subtitlesEnabled.value = prefs.getBoolean(KEY_SUBTITLES, true)
+        _guidePreviewVideo.value = prefs.getBoolean(KEY_PREVIEW_VIDEO, true)
+        _guidePreviewSound.value = prefs.getBoolean(KEY_PREVIEW_SOUND, false)
+        _pinIsSet.value = prefs.getString(KEY_PIN_HASH, null) != null
+        _hiddenCategories.value = prefs.getStringSet(KEY_HIDDEN_CATS, emptySet())!!.toSet()
+        _hiddenUnlocked.value = false
+        _resumeLastChannel.value = prefs.getBoolean(KEY_RESUME_LAST, false)
+        _recordPadStartMinutes.value = prefs.getInt(KEY_PAD_START, 1)
+        _recordPadEndMinutes.value = prefs.getInt(KEY_PAD_END, 5)
+        _recordAutoSwitch.value = prefs.getBoolean(KEY_REC_AUTOSWITCH, true)
+        _livePauseEnabled.value = prefs.getBoolean(KEY_LIVE_PAUSE, false)
+        _liveEnabled.value = prefs.getBoolean(KEY_CONTENT_LIVE, true)
+        _moviesEnabled.value = prefs.getBoolean(KEY_CONTENT_MOVIES, true)
+        _seriesEnabled.value = prefs.getBoolean(KEY_CONTENT_SERIES, true)
+        _languageTag.value = prefs.getString(KEY_LANGUAGE, "").orEmpty()
+        _playerResizeMode.value = prefs.getInt(KEY_RESIZE_MODE, 0)
+        _recordingTarget.value = readRecordingTarget()
+        _smbHost.value = prefs.getString(KEY_SMB_HOST, "").orEmpty()
+        _smbShare.value = prefs.getString(KEY_SMB_SHARE, "").orEmpty()
+        _smbFolder.value = prefs.getString(KEY_SMB_FOLDER, "OpenTV").orEmpty()
+        _smbUser.value = prefs.getString(KEY_SMB_USER, "").orEmpty()
+        _smbPassword.value = prefs.getString(KEY_SMB_PASS, "").orEmpty()
+        _nasAutoSync.value = prefs.getBoolean(KEY_NAS_AUTO_SYNC, false)
+        _tmdbApiKey.value = prefs.getString(KEY_TMDB_KEY, "").orEmpty()
+        _stremioAddons.value = readStremioAddons()
+    }
+
     /** How the app chooses light vs dark. TV defaults to dark under [ThemeMode.SYSTEM]. */
     enum class ThemeMode { SYSTEM, DARK, LIGHT }
 
@@ -436,6 +507,15 @@ class AppSettings private constructor(context: Context) {
         }.getOrNull() ?: emptyList()
 
     companion object {
+        private val PORTABLE_KEYS = setOf(
+            "theme_mode", "ui_scale", "channel_layout", "subtitles_enabled",
+            "guide_preview_video", "guide_preview_sound", "parental_pin_hash",
+            "hidden_categories", "resume_last_channel", "content_live", "content_movies",
+            "content_series", "player_resize_mode", "language_tag", "recording_target",
+            "smb_host", "smb_share", "smb_folder", "smb_user", "smb_password",
+            "tmdb_api_key", "stremio_addons", "rec_pad_start_min", "rec_pad_end_min",
+            "rec_auto_switch", "live_pause_enabled", "nas_auto_sync",
+        )
         private const val KEY_THEME = "theme_mode"
         private const val KEY_UI_SCALE = "ui_scale"
         private const val KEY_CHANNEL_LAYOUT = "channel_layout"
