@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8
+
+- **Adjustable interface size.** Set the overall interface scale from 75% to 100% in Display &
+  Playback settings. The default remains 90%, and changes apply immediately.
+
 ## 1.7
 
 - **MP2 audio fallback.** Live playback includes the Jellyfin Media3 FFmpeg audio decoder as a

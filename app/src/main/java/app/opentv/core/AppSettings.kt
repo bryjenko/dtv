@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.math.roundToInt
 
 /**
  * The handful of user preferences that are not "data" (sources, guides) but "how the app
@@ -25,6 +26,12 @@ class AppSettings private constructor(context: Context) {
 
     private val prefs =
         context.applicationContext.getSharedPreferences("opentv_settings", Context.MODE_PRIVATE)
+
+    /** Overall interface scale, applied through Compose density so layout and text scale together. */
+    private val _uiScale = MutableStateFlow(
+        prefs.getFloat(KEY_UI_SCALE, DEFAULT_UI_SCALE).coerceIn(MIN_UI_SCALE, MAX_UI_SCALE),
+    )
+    val uiScale: StateFlow<Float> = _uiScale.asStateFlow()
 
     private val addonJson = Json { ignoreUnknownKeys = true }
 
@@ -117,6 +124,14 @@ class AppSettings private constructor(context: Context) {
     fun setThemeMode(mode: ThemeMode) {
         prefs.edit().putString(KEY_THEME, mode.name).apply()
         _themeMode.value = mode
+    }
+
+    fun setUiScale(scale: Float) {
+        val clamped = scale.coerceIn(MIN_UI_SCALE, MAX_UI_SCALE)
+        val steps = ((clamped - MIN_UI_SCALE) / UI_SCALE_STEP).roundToInt()
+        val snapped = (MIN_UI_SCALE + steps * UI_SCALE_STEP).coerceAtMost(MAX_UI_SCALE)
+        prefs.edit().putFloat(KEY_UI_SCALE, snapped).apply()
+        _uiScale.value = snapped
     }
 
     fun setChannelLayout(layout: ChannelLayout) {
@@ -422,6 +437,7 @@ class AppSettings private constructor(context: Context) {
 
     companion object {
         private const val KEY_THEME = "theme_mode"
+        private const val KEY_UI_SCALE = "ui_scale"
         private const val KEY_CHANNEL_LAYOUT = "channel_layout"
         private const val KEY_SUBTITLES = "subtitles_enabled"
         private const val KEY_PREVIEW_VIDEO = "guide_preview_video"
@@ -461,6 +477,11 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_PAD_END = "rec_pad_end_min"
         private const val KEY_REC_AUTOSWITCH = "rec_auto_switch"
         private const val KEY_LIVE_PAUSE = "live_pause_enabled"
+
+        const val MIN_UI_SCALE = 0.75f
+        const val MAX_UI_SCALE = 1.0f
+        const val DEFAULT_UI_SCALE = 0.9f
+        const val UI_SCALE_STEP = 0.05f
 
         @Volatile private var instance: AppSettings? = null
 

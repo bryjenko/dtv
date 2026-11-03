@@ -104,6 +104,7 @@ class MainActivity : ComponentActivity() {
             val systemDensity = LocalDensity.current
             val settings = remember { ServiceLocator.get(this).settings }
             val themeMode by settings.themeMode.collectAsState()
+            val uiScale by settings.uiScale.collectAsState()
             val darkTheme = when (themeMode) {
                 AppSettings.ThemeMode.DARK -> true
                 AppSettings.ThemeMode.LIGHT -> false
@@ -112,7 +113,7 @@ class MainActivity : ComponentActivity() {
             }
             CompositionLocalProvider(
                 LocalDensity provides Density(
-                    density = systemDensity.density * APP_UI_SCALE,
+                    density = systemDensity.density * uiScale,
                     fontScale = systemDensity.fontScale,
                 ),
             ) {
@@ -185,7 +186,6 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val APP_UI_SCALE = 0.9f
         /** A reminder notification carries the channel to tune to in this extra. */
         const val EXTRA_PLAY_CHANNEL = "opentv.play_channel"
 

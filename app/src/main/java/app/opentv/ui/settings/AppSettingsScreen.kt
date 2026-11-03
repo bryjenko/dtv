@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +49,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import android.content.Context
 import android.widget.Toast
+import kotlin.math.roundToInt
 import app.opentv.R
 import app.opentv.core.AppSettings
 import app.opentv.core.SleepTimer
@@ -64,6 +66,7 @@ fun AppSettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val settings = remember { AppSettings.get(context) }
     val themeMode by settings.themeMode.collectAsState()
+    val uiScale by settings.uiScale.collectAsState()
     val channelLayout by settings.channelLayout.collectAsState()
     val previewVideo by settings.guidePreviewVideo.collectAsState()
     val previewSound by settings.guidePreviewSound.collectAsState()
@@ -114,6 +117,27 @@ fun AppSettingsScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                stringResource(R.string.settings_ui_scale_title, (uiScale * 100).roundToInt()),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                stringResource(R.string.settings_ui_scale_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Slider(
+                value = uiScale,
+                onValueChange = settings::setUiScale,
+                valueRange = AppSettings.MIN_UI_SCALE..AppSettings.MAX_UI_SCALE,
+                steps = 4,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("75%", style = MaterialTheme.typography.labelMedium)
+                Text("100%", style = MaterialTheme.typography.labelMedium)
+            }
         }
 
         Spacer(Modifier.height(16.dp))
