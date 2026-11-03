@@ -1,4 +1,4 @@
-# OpenTV roadmap — feature gap analysis
+# D-TV roadmap — feature gap analysis
 
 This is an evidence-based plan for what to build next, benchmarked against the apps people
 actually compare us to (TiviMate, IPTV Smarters Pro, Sparkle/OTT Navigator, Televizo) and
@@ -15,7 +15,7 @@ list below is mostly about reaching parity on the features users treat as non-ne
 
 ## The one that matters most: Catch-up / Archive
 
-Across every source this is the single highest-demand missing feature, and OpenTV is unusually
+Across every source this is the single highest-demand missing feature, and D-TV is unusually
 well-placed to build it because it already parses XMLTV start/duration times. **No new video
 decoding is involved** — an archived programme plays through the existing player exactly like a
 movie. The work is reading the catch-up fields, building the right URL, and a guide gesture to

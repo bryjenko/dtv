@@ -6,7 +6,7 @@ particular the ones made in direct response to how apps in this category typical
 ## The shape of it
 
 ```
-app/src/main/java/app/opentv/
+app/src/main/java/io/github/bryjenko/dtv/
 ├── core/           ServiceLocator — the whole dependency graph, one file
 ├── data/
 │   ├── model/      Domain models, which double as Room entities
@@ -23,10 +23,12 @@ Single module, single Gradle build. A multi-module setup would build faster in C
 a team of ten would do. This is not a team of ten; it is a project whose survival depends on a
 stranger with a broken channel being able to find the relevant code in under five minutes.
 
-## No backend. At all.
+## No D-TV backend
 
-OpenTV has no server. There is no account, no login, no cloud sync, no web dashboard for
-editing your channel list from a browser.
+D-TV does not operate a server or user account. It has no web dashboard or automatic cloud
+sync. An optional, user-initiated configuration backup can save an encrypted file in the user's
+own Google Drive app data area. The app encrypts the configuration before upload; this is a
+backup and restore flow, not ongoing synchronization.
 
 This is the single most important architectural decision in the project, and it is worth being
 explicit about why, because a web dashboard is a genuinely nice feature and users ask for it.
@@ -38,20 +40,20 @@ servers go quiet — taking the app with them, because by then the app cannot st
 them. Users who paid discover that their "lifetime" purchase bought them a client for a
 service that no longer exists.
 
-So OpenTV stores everything on the device, in SQLite. The consequences are accepted honestly:
+So D-TV stores working data on the device, in SQLite. The consequences are accepted honestly:
 
-- Setting up a second TV means entering your details again. This is a real cost.
+- Setting up a second TV means restoring a backup or entering your details again. This is a real cost.
 - Favourites and channel ordering do not follow you between devices.
 
 And what is bought with it:
 
 - The app costs nothing to run, so it cannot be switched off.
-- Provider credentials never leave the device. Nobody has to trust the maintainers with them.
+- Provider credentials are not sent to a D-TV server. If the user chooses Google Drive backup,
+  they are included in the locally encrypted backup stored in that user's Drive.
 - It works with no internet connection to anything except your own provider.
 
-If multi-device setup becomes painful enough, the answer is **export/import of a settings file**
-— or, at most, optional sync through storage the *user* already owns and pays for. Never a
-service the project has to fund.
+The Google Drive backup is optional and requires the user to configure Google OAuth for this
+fork. It avoids a service that the project has to fund.
 
 ## The EPG, and why it is written the way it is
 

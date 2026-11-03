@@ -1,40 +1,35 @@
-# Privacy
+# D-TV privacy
 
-OpenTV collects nothing. There is no analytics SDK, no crash reporter, no telemetry, and no
-network call to any domain the project controls — because the project controls none.
+D-TV collects no analytics, crash reports, or telemetry and operates no server or user account.
 
-## What is stored, and where
+## What is stored
 
-Everything lives in a SQLite database in the app's private storage on your device:
+Working data is stored in the app's private SQLite database on the device. This includes provider
+addresses and credentials, channel and on-demand catalogues, programme guide data, favourites,
+hidden channels, and resume positions.
 
-- Your provider's address, username and password
-- The channel, movie and series catalogue downloaded from your provider
-- The guide (EPG)
-- Your favourites, hidden channels and resume positions
+By default, this data stays on the device. If you explicitly use Google Drive backup, D-TV
+encrypts the configuration on the device with your six digit code before uploading it to your
+Google account's private app data area. D-TV does not operate that storage, and backup is not
+automatic sync.
 
-None of it is uploaded anywhere. There is no account to create and no server to sync with.
+## Network connections
 
-## Who your device talks to
-
-Only your provider, and only at the address you entered. Channel logos and posters are fetched
-from whatever URLs your provider puts in its catalogue, which are usually its own servers but
-may be third parties — that is your provider's choice, not ours.
+D-TV connects to the provider and to media or artwork URLs supplied by the provider. Google Drive
+is contacted only when you use the backup or restore feature. The app does not send data to a
+D-TV-operated service.
 
 ## Cleartext HTTP
 
-The app allows plain HTTP (`usesCleartextTraffic="true"`). The overwhelming majority of IPTV
-panels are HTTP-only; refusing them would make the app useless to most of the people it is for.
-
-Be aware of what that means: **on an HTTP connection, your provider username and password are
-sent unencrypted**, and anyone able to observe the network between you and your provider can
-read them. This is a property of how these services are built, not of OpenTV. If your provider
-offers an HTTPS endpoint, use it.
+The app allows plain HTTP because many IPTV panels do not offer HTTPS. On an HTTP connection,
+your provider username and password are sent unencrypted; anyone able to observe that network
+traffic may read them. Use HTTPS when your provider offers it.
 
 ## Uninstalling
 
-Removing the app removes the database and everything in it.
+Removing D-TV removes its local database and settings. A separately created encrypted Google
+Drive backup remains in your Google account until you delete it there.
 
 ## Reporting a privacy problem
 
-Open an issue. If it involves something you would rather not post publicly, say so in the issue
-without the details and a maintainer will arrange somewhere better.
+Open an issue in the D-TV repository. Do not include provider credentials or other secrets.

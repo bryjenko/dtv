@@ -50,5 +50,5 @@ body:
     id: logs
     attributes:
       label: Logs (optional)
-      description: "adb logcat -s OpenTV:* EpgRepository:* SyncWorker:* — check for credentials before pasting"
+      description: "adb logcat -s D-TV:* EpgRepository:* SyncWorker:* — check for credentials before pasting"
       render: shell

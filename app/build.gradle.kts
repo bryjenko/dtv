@@ -7,15 +7,15 @@ plugins {
 }
 
 android {
-    namespace = "app.opentv"
+    namespace = "io.github.bryjenko.dtv"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "app.opentv"
+        applicationId = "io.github.bryjenko.dtv"
         minSdk = 26
         targetSdk = 35
-        versionCode = 33
-        versionName = "2.0.2"
+        versionCode = 34
+        versionName = "2.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

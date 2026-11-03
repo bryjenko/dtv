@@ -41,7 +41,7 @@ Google Cloud authorization setup is required before backup and restore can conne
 `UNREGISTERED_ON_API_CONSOLE` error means Google does not recognize the installed app's package and
 signing-certificate pair. In the Google Cloud project, enable the Google Drive API, allow the
 `drive.appdata` scope on the consent screen, and create an Android OAuth client for package
-`app.opentv` using the release APK's certificate SHA-1. If the consent screen is in testing mode,
+`io.github.bryjenko.dtv` using the release APK's certificate SHA-1. If the consent screen is in testing mode,
 add the Google account as a test user. Download the [latest APK](https://github.com/bryjenko/dtv/releases/latest/download/dtv.apk)
 and read its SHA-1 with `keytool -printcert -jarfile dtv.apk`.
 
