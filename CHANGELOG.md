@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0
+## 2.0.1
 
 - **Encrypted Google Drive backup and restore.** Copy provider entries and app preferences to
   the private app data area of Google Drive, protected by a six digit code. Restore on another

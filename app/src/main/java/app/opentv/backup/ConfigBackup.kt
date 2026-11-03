@@ -69,7 +69,8 @@ object ConfigBackup {
             ),
         ).toByteArray(Charsets.UTF_8)
 
-    fun inspect(plaintext: ByteArray): BackupPayload = json.decodeFromString(plaintext.toString(Charsets.UTF_8)).also {
+    fun inspect(plaintext: ByteArray): BackupPayload =
+        json.decodeFromString<BackupPayload>(plaintext.toString(Charsets.UTF_8)).also {
         require(it.schema == 1) { "This backup was made by a newer D-TV version." }
         require(it.sources.size <= 100) { "The backup contains too many provider entries." }
         it.sources.forEach { source ->
