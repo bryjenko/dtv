@@ -164,13 +164,16 @@ class MainActivity : ComponentActivity(), io.github.bryjenko.dtv.ui.settings.Mai
             packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
 
     fun maybeEnterPip() {
-        if (!io.github.bryjenko.dtv.core.PipState.eligible || !io.github.bryjenko.dtv.core.PipState.isPlaying) return
+        if (!io.github.bryjenko.dtv.core.AppSettings.get(this).pipEnabled.value ||
+            !io.github.bryjenko.dtv.core.PipState.eligible ||
+            !io.github.bryjenko.dtv.core.PipState.isPlaying
+        ) return
         enterPipNow()
     }
 
     /** Explicit request from the player's PiP button — no eligibility guard, the user asked. */
     fun enterPipNow() {
-        if (!supportsPip()) return
+        if (!supportsPip() || !io.github.bryjenko.dtv.core.AppSettings.get(this).pipEnabled.value) return
         runCatching {
             enterPictureInPictureMode(
                 PictureInPictureParams.Builder()

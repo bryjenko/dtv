@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.5
+
+- **Pop-Out off by default.** Picture in Picture can be enabled in Display & Playback settings;
+  when disabled, D-TV will not pop out automatically on Home or show the player Pop-Out button.
+
 ## 2.0.4
 
 - **Google Drive backup lookup.** Search the correct Drive app-data space so D-TV can find and

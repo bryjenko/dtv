@@ -99,6 +99,7 @@ class AppSettings private constructor(context: Context) {
         _hiddenCategories.value = prefs.getStringSet(KEY_HIDDEN_CATS, emptySet())!!.toSet()
         _hiddenUnlocked.value = false
         _resumeLastChannel.value = prefs.getBoolean(KEY_RESUME_LAST, false)
+        _pipEnabled.value = prefs.getBoolean(KEY_PIP_ENABLED, false)
         _recordPadStartMinutes.value = prefs.getInt(KEY_PAD_START, 1)
         _recordPadEndMinutes.value = prefs.getInt(KEY_PAD_END, 5)
         _recordAutoSwitch.value = prefs.getBoolean(KEY_REC_AUTOSWITCH, true)
@@ -146,6 +147,15 @@ class AppSettings private constructor(context: Context) {
     /** Whether the guide preview plays sound (off by default — quieter while browsing). */
     private val _guidePreviewSound = MutableStateFlow(prefs.getBoolean(KEY_PREVIEW_SOUND, false))
     val guidePreviewSound: StateFlow<Boolean> = _guidePreviewSound.asStateFlow()
+
+    /** Whether the player may enter Android picture-in-picture, either automatically or manually. */
+    private val _pipEnabled = MutableStateFlow(prefs.getBoolean(KEY_PIP_ENABLED, false))
+    val pipEnabled: StateFlow<Boolean> = _pipEnabled.asStateFlow()
+
+    fun setPipEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_PIP_ENABLED, enabled).apply()
+        _pipEnabled.value = enabled
+    }
 
     /** The profile whose watch history is active. Defaults to the built-in profile (id 1). */
     private val _activeProfileId = MutableStateFlow(prefs.getLong(KEY_ACTIVE_PROFILE, 1L))
@@ -526,7 +536,7 @@ class AppSettings private constructor(context: Context) {
     companion object {
         private val PORTABLE_KEYS = setOf(
             "theme_mode", "ui_scale", "channel_layout", "subtitles_enabled",
-            "guide_preview_video", "guide_preview_sound", "parental_pin_hash",
+            "guide_preview_video", "guide_preview_sound", "pip_enabled", "parental_pin_hash",
             "hidden_categories", "resume_last_channel", "content_live", "content_movies",
             "content_series", "player_resize_mode", "language_tag", "recording_target",
             "smb_host", "smb_share", "smb_folder", "smb_user", "smb_password",
@@ -540,6 +550,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SUBTITLES = "subtitles_enabled"
         private const val KEY_PREVIEW_VIDEO = "guide_preview_video"
         private const val KEY_PREVIEW_SOUND = "guide_preview_sound"
+        private const val KEY_PIP_ENABLED = "pip_enabled"
         private const val KEY_PIN_HASH = "parental_pin_hash"
         private const val KEY_HIDDEN_CATS = "hidden_categories"
         private const val KEY_ACTIVE_PROFILE = "active_profile_id"

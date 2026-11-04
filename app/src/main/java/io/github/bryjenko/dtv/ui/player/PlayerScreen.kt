@@ -137,6 +137,7 @@ fun PlayerScreen(
     val view = LocalView.current
     val graph = remember { ServiceLocator.get(context) }
     val settings = remember { graph.settings }
+    val pipEnabled by settings.pipEnabled.collectAsState()
     val scope = remember { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
     val subtitlesDefault by settings.subtitlesEnabled.collectAsState()
     val controller = remember {
@@ -572,7 +573,7 @@ fun PlayerScreen(
                         selected = recordingThis,
                         iconTint = Color(0xFFE53935),
                     ) { toggleRecord() }
-                    if (pipSupported) {
+                    if (pipSupported && pipEnabled) {
                         Spacer(Modifier.width(10.dp))
                         BarChip(Icons.Filled.PictureInPictureAlt, stringResource(R.string.player_pop_out), false) {
                             (context.findActivity() as? io.github.bryjenko.dtv.MainActivity)?.enterPipNow()
