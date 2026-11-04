@@ -109,6 +109,7 @@ class AppSettings private constructor(context: Context) {
         _seriesEnabled.value = prefs.getBoolean(KEY_CONTENT_SERIES, true)
         _languageTag.value = prefs.getString(KEY_LANGUAGE, "").orEmpty()
         _playerResizeMode.value = prefs.getInt(KEY_RESIZE_MODE, 0)
+        _autoStretch43.value = prefs.getBoolean(KEY_AUTO_STRETCH_43, true)
         _recordingTarget.value = readRecordingTarget()
         _smbHost.value = prefs.getString(KEY_SMB_HOST, "").orEmpty()
         _smbShare.value = prefs.getString(KEY_SMB_SHARE, "").orEmpty()
@@ -365,6 +366,15 @@ class AppSettings private constructor(context: Context) {
     private val _playerResizeMode = MutableStateFlow(prefs.getInt(KEY_RESIZE_MODE, 0))
     val playerResizeMode: StateFlow<Int> = _playerResizeMode.asStateFlow()
 
+    /** Stretch 4:3 video to widescreen automatically; enabled by default. */
+    private val _autoStretch43 = MutableStateFlow(prefs.getBoolean(KEY_AUTO_STRETCH_43, true))
+    val autoStretch43: StateFlow<Boolean> = _autoStretch43.asStateFlow()
+
+    fun setAutoStretch43(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AUTO_STRETCH_43, enabled).apply()
+        _autoStretch43.value = enabled
+    }
+
     fun setPlayerResizeMode(mode: Int) {
         prefs.edit().putInt(KEY_RESIZE_MODE, mode).apply()
         _playerResizeMode.value = mode
@@ -538,7 +548,7 @@ class AppSettings private constructor(context: Context) {
             "theme_mode", "ui_scale", "channel_layout", "subtitles_enabled",
             "guide_preview_video", "guide_preview_sound", "pip_enabled", "parental_pin_hash",
             "hidden_categories", "resume_last_channel", "content_live", "content_movies",
-            "content_series", "player_resize_mode", "language_tag", "recording_target",
+            "content_series", "player_resize_mode", "auto_stretch_4_3", "language_tag", "recording_target",
             "smb_host", "smb_share", "smb_folder", "smb_user", "smb_password",
             "tmdb_api_key", "stremio_addons", "rec_pad_start_min", "rec_pad_end_min",
             "rec_auto_switch", "live_pause_enabled", "nas_auto_sync", "launcher_style",
@@ -560,6 +570,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_CONTENT_SERIES = "content_series"
         private const val KEY_LAST_CHANNEL = "last_channel_id"
         private const val KEY_RESIZE_MODE = "player_resize_mode"
+        private const val KEY_AUTO_STRETCH_43 = "auto_stretch_4_3"
         private const val KEY_LANGUAGE = "language_tag"
 
         /**

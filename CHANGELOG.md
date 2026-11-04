@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.6
+
+- **Automatic 4:3 stretching.** Stretch 4:3 channels to widescreen by default, with a setting in
+  Display & Playback to turn it off. Other aspect ratios keep the selected player resize mode.
+
 ## 2.0.5
 
 - **Pop-Out off by default.** Picture in Picture can be enabled in Display & Playback settings;

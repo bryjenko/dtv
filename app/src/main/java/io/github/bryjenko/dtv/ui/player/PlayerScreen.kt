@@ -65,6 +65,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -91,6 +92,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.C
+import androidx.media3.common.VideoSize
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -138,6 +140,7 @@ fun PlayerScreen(
     val graph = remember { ServiceLocator.get(context) }
     val settings = remember { graph.settings }
     val pipEnabled by settings.pipEnabled.collectAsState()
+    val autoStretch43 by settings.autoStretch43.collectAsState()
     val scope = remember { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
     val subtitlesDefault by settings.subtitlesEnabled.collectAsState()
     val controller = remember {
@@ -177,6 +180,30 @@ fun PlayerScreen(
     var numberEntry by remember { mutableStateOf("") }
     var paused by remember { mutableStateOf(false) }
     var resizeMode by remember { mutableIntStateOf(settings.playerResizeMode.value) }
+    var videoAspectRatio by remember {
+        val size = controller.player.videoSize
+        mutableFloatStateOf(
+            if (size.width > 0 && size.height > 0) {
+                size.width * size.pixelWidthHeightRatio / size.height
+            } else 0f,
+        )
+    }
+    DisposableEffect(controller.player) {
+        val listener = object : androidx.media3.common.Player.Listener {
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                val ratio = if (videoSize.width > 0 && videoSize.height > 0) {
+                    videoSize.width * videoSize.pixelWidthHeightRatio / videoSize.height
+                } else 0f
+                videoAspectRatio = if (videoSize.unappliedRotationDegrees % 180 == 0) ratio
+                else if (ratio > 0f) 1f / ratio else 0f
+            }
+        }
+        controller.player.addListener(listener)
+        onDispose { controller.player.removeListener(listener) }
+    }
+    val effectiveResizeMode = if (autoStretch43 && videoAspectRatio in 1.29f..1.38f) {
+        AspectRatioFrameLayout.RESIZE_MODE_FILL
+    } else resizeMode
 
     var controlsVisible by remember { mutableStateOf(true) }
     var panel by remember { mutableStateOf(Panel.NONE) }
@@ -414,7 +441,7 @@ fun PlayerScreen(
                     )
                 }
             },
-            update = { it.resizeMode = resizeMode },
+            update = { it.resizeMode = effectiveResizeMode },
         )
 
         // The channel number as you type it, top-right, until it resolves.

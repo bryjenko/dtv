@@ -201,6 +201,8 @@
     <string name="settings_resume_subtitle">Open the app straight into the channel you were last watching, instead of the guide. Press Back to reach the guide.</string>
     <string name="settings_pip_title">Allow Pop-Out (Picture in Picture)</string>
     <string name="settings_pip_subtitle">Allow the player to pop out manually or when you press Home. Off by default.</string>
+    <string name="settings_auto_stretch_43_title">Stretch 4:3 channels to widescreen</string>
+    <string name="settings_auto_stretch_43_subtitle">Automatically fill the screen for 4:3 video. On by default; other aspect ratios keep your selected player setting.</string>
     <string name="settings_sleep_timer">Sleep timer</string>
     <string name="settings_sleep_off_desc">Off — playback keeps going until you stop it.</string>
     <string name="settings_sleep_on_desc">On — playback will stop in about %1$d min.</string>
