@@ -403,8 +403,8 @@ class PlayerController(
          * Larger than ExoPlayer's defaults. IPTV sources are much twitchier than a CDN, and a
          * deeper buffer is the difference between a momentary hiccup and a visible stall.
          */
-        const val MIN_BUFFER_MILLIS = 15_000
-        const val MAX_BUFFER_MILLIS = 60_000
+        const val MIN_BUFFER_MILLIS = 30_000
+        const val MAX_BUFFER_MILLIS = 90_000
         const val BUFFER_FOR_PLAYBACK_MILLIS = 2_500
         const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MILLIS = 5_000
 

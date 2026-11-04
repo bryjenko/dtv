@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.7
+
+- **Larger live TV buffer.** Normal playback now aims to hold at least 30 seconds ahead, with a
+  90 second maximum. Playback still starts after about 2.5 seconds when data is available.
+
 ## 2.0.6
 
 - **Automatic 4:3 stretching.** Stretch 4:3 channels to widescreen by default, with a setting in
