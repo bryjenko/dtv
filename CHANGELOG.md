@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.2
+
+- **Restore Settings focus.** Returning from a settings page now restores the previously
+  highlighted option and scroll position instead of jumping back to the top.
+
 ## 2.1.1
 
 - **Reliable phone clipboard flow.** Make clipboard copy an explicit action with a visible

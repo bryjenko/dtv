@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
@@ -39,18 +40,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.withFrameNanos
 import io.github.bryjenko.dtv.R
 
 /**
@@ -73,19 +79,29 @@ fun SettingsHubScreen(
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
 ) {
+    val listState = rememberLazyListState()
+    var lastFocusedId by rememberSaveable { mutableStateOf("providers") }
+    val focusRequesters = remember { mutableMapOf<String, FocusRequester>() }
     val entries = listOf(
-        HubEntry(Icons.Filled.Dns, stringResource(R.string.settings_providers_title), stringResource(R.string.settings_providers_subtitle), onOpenProviders),
-        HubEntry(Icons.Filled.Extension, stringResource(R.string.settings_addons_title), stringResource(R.string.settings_addons_subtitle), onOpenAddons),
-        HubEntry(Icons.Filled.LiveTv, stringResource(R.string.settings_guide_title), stringResource(R.string.settings_guide_subtitle), onOpenGuide),
-        HubEntry(Icons.Filled.GridView, stringResource(R.string.common_channels), stringResource(R.string.settings_channels_subtitle), onOpenChannels),
-        HubEntry(Icons.Filled.PhoneAndroid, stringResource(R.string.settings_webmanager_title), stringResource(R.string.settings_webmanager_subtitle), onOpenWebManager),
-        HubEntry(Icons.Filled.Tune, stringResource(R.string.settings_display_title), stringResource(R.string.settings_display_subtitle), onOpenDisplay),
-        HubEntry(Icons.Filled.Storage, stringResource(R.string.settings_recording_title), stringResource(R.string.settings_recording_subtitle), onOpenRecordings),
-        HubEntry(Icons.Filled.Lock, stringResource(R.string.settings_parental_title), stringResource(R.string.settings_parental_subtitle), onOpenParental),
-        HubEntry(Icons.Filled.Sync, stringResource(R.string.settings_sync_title), stringResource(R.string.settings_sync_subtitle), onOpenSync),
-        HubEntry(Icons.Filled.Cloud, "Backup & restore", "Encrypted phone transfer", onOpenBackup),
-        HubEntry(Icons.Filled.Info, stringResource(R.string.settings_about_title), stringResource(R.string.settings_about_subtitle), onOpenAbout),
+        HubEntry("providers", Icons.Filled.Dns, stringResource(R.string.settings_providers_title), stringResource(R.string.settings_providers_subtitle), onOpenProviders),
+        HubEntry("addons", Icons.Filled.Extension, stringResource(R.string.settings_addons_title), stringResource(R.string.settings_addons_subtitle), onOpenAddons),
+        HubEntry("guide", Icons.Filled.LiveTv, stringResource(R.string.settings_guide_title), stringResource(R.string.settings_guide_subtitle), onOpenGuide),
+        HubEntry("channels", Icons.Filled.GridView, stringResource(R.string.common_channels), stringResource(R.string.settings_channels_subtitle), onOpenChannels),
+        HubEntry("web-manager", Icons.Filled.PhoneAndroid, stringResource(R.string.settings_webmanager_title), stringResource(R.string.settings_webmanager_subtitle), onOpenWebManager),
+        HubEntry("display", Icons.Filled.Tune, stringResource(R.string.settings_display_title), stringResource(R.string.settings_display_subtitle), onOpenDisplay),
+        HubEntry("recordings", Icons.Filled.Storage, stringResource(R.string.settings_recording_title), stringResource(R.string.settings_recording_subtitle), onOpenRecordings),
+        HubEntry("parental", Icons.Filled.Lock, stringResource(R.string.settings_parental_title), stringResource(R.string.settings_parental_subtitle), onOpenParental),
+        HubEntry("sync", Icons.Filled.Sync, stringResource(R.string.settings_sync_title), stringResource(R.string.settings_sync_subtitle), onOpenSync),
+        HubEntry("backup", Icons.Filled.Cloud, "Backup & restore", "Encrypted phone transfer", onOpenBackup),
+        HubEntry("about", Icons.Filled.Info, stringResource(R.string.settings_about_title), stringResource(R.string.settings_about_subtitle), onOpenAbout),
     )
+
+    LaunchedEffect(Unit) {
+        val index = entries.indexOfFirst { it.id == lastFocusedId }.coerceAtLeast(0)
+        listState.scrollToItem(index)
+        withFrameNanos { }
+        runCatching { focusRequesters[lastFocusedId]?.requestFocus() }
+    }
 
     Column(
         Modifier
@@ -103,15 +119,20 @@ fun SettingsHubScreen(
         Spacer(Modifier.height(20.dp))
 
         LazyColumn(
+            state = listState,
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.widthIn(max = 760.dp),
         ) {
-            items(entries) { entry -> HubRow(entry) }
+            items(entries, key = { it.id }) { entry ->
+                val requester = focusRequesters.getOrPut(entry.id) { FocusRequester() }
+                HubRow(entry, requester) { lastFocusedId = entry.id }
+            }
         }
     }
 }
 
 private data class HubEntry(
+    val id: String,
     val icon: ImageVector,
     val title: String,
     val subtitle: String,
@@ -119,12 +140,13 @@ private data class HubEntry(
 )
 
 @Composable
-private fun HubRow(entry: HubEntry) {
+private fun HubRow(entry: HubEntry, focusRequester: FocusRequester, onFocused: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     Row(
         Modifier
             .fillMaxWidth()
-            .onFocusChanged { focused = it.isFocused }
+            .focusRequester(focusRequester)
+            .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocused() }
             .clip(RoundedCornerShape(14.dp))
             .background(
                 if (focused) MaterialTheme.colorScheme.primaryContainer
