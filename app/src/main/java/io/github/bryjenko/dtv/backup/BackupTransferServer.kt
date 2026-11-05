@@ -7,7 +7,6 @@ import io.github.bryjenko.dtv.data.db.SourceDao
 import io.github.bryjenko.dtv.pairing.PairingHttp
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
@@ -18,7 +17,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -116,6 +114,24 @@ class BackupTransferServer(
 
     private companion object {
         const val MAX_BODY = 32 * 1024 * 1024
-        val PAGE = """<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>D-TV Backup</title><style>body{font:17px system-ui;max-width:520px;margin:30px auto;padding:0 18px;background:#101522;color:#fff}button,input,textarea{font:inherit;padding:13px;margin:8px 0;width:100%;box-sizing:border-box;border-radius:10px}button{background:#168cff;color:white;border:0}input,textarea{background:#202a3b;color:white;border:1px solid #52627b}section{display:none}section.on{display:block}.muted{color:#b4c2d6}</style><h1>D-TV Backup &amp; Restore</h1><p class="muted">Keep this phone and both TVs on the same Wi-Fi network.</p><button onclick="show('backup')">Backup</button><button onclick="show('restore')">Restore</button><section id="backup"><h2>Create backup</h2><p>Create a six digit code. You will enter it on the new TV.</p><input id="p1" inputmode="numeric" maxlength="6" placeholder="6 digit code"><input id="p2" inputmode="numeric" maxlength="6" placeholder="Confirm code"><button onclick="backup()">Create and copy backup</button></section><section id="restore"><h2>Restore backup</h2><textarea id="data" rows="7" placeholder="Paste your backup text here"></textarea><button onclick="paste()">Paste from clipboard</button><input id="pin" inputmode="numeric" maxlength="6" placeholder="6 digit code"><button onclick="restore()">Restore to this TV</button></section><p id="msg"></p><script>const t=new URLSearchParams(location.search).get('t');function show(s){document.querySelectorAll('section').forEach(x=>x.className='');document.getElementById(s).className='on'}async function post(path,obj){let r=await fetch(path+'?t='+encodeURIComponent(t),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(obj)});let x=await r.text();if(!r.ok)throw Error(x);return x}async function backup(){let a=p1.value,b=p2.value;if(!/^\\d{6}$/.test(a)||a!==b){msg.textContent='Enter and confirm the same six digits.';return}try{let x=await post('/backup',{pin:a});data.value=x;try{await navigator.clipboard.writeText(x);msg.textContent='Encrypted backup copied to clipboard. Open the new TV transfer page and choose Restore.'}catch(e){show('restore');msg.textContent='Backup created. Select all text and copy it to your clipboard.'}}catch(e){msg.textContent='Backup failed: '+e.message}}async function paste(){try{data.value=await navigator.clipboard.readText();msg.textContent='Backup pasted.'}catch(e){msg.textContent='Clipboard access is unavailable here. Tap the box and choose Paste.'}}async function restore(){if(!/^\\d{6}$/.test(pin.value)){msg.textContent='Enter all six digits.';return}try{msg.textContent=await post('/restore',{pin:pin.value,data:data.value.trim()})}catch(e){msg.textContent=e.message}}</script>"""
+        val PAGE = """<!doctype html>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>D-TV Backup</title>
+<style>body{font:17px system-ui;max-width:520px;margin:30px auto;padding:0 18px;background:#101522;color:#fff}button,input,textarea{font:inherit;padding:13px;margin:8px 0;width:100%;box-sizing:border-box;border-radius:10px}button{background:#168cff;color:white;border:0}input,textarea{background:#202a3b;color:white;border:1px solid #52627b}section{display:none}section.on{display:block}.muted{color:#b4c2d6}textarea{overflow-wrap:anywhere}</style></head>
+<body><h1>D-TV Backup &amp; Restore</h1><p class="muted">Keep this phone and both TVs on the same Wi-Fi network.</p>
+<button onclick="show('backup')">Backup</button><button onclick="show('restore')">Restore</button>
+<section id="backup"><h2>Create backup</h2><p>Create a six digit code. You will enter it on the new TV.</p><input id="pin1" inputmode="numeric" maxlength="6" placeholder="6 digit code"><input id="pin2" inputmode="numeric" maxlength="6" placeholder="Confirm code"><button id="makeBackup" onclick="backup()">Create backup</button></section>
+<section id="backup-result"><h2>Backup text</h2><p id="copyHelp">Your encrypted backup is ready. Copy this text to your phone clipboard.</p><textarea id="backupText" rows="8" readonly></textarea><button onclick="copyBackup()">Copy backup text</button></section>
+<section id="restore"><h2>Restore backup</h2><p>Paste the saved backup text, then enter its six digit code.</p><textarea id="restoreText" rows="8" placeholder="Paste your backup text here"></textarea><button onclick="pasteBackup()">Paste from clipboard</button><input id="restorePin" inputmode="numeric" maxlength="6" placeholder="6 digit code"><button onclick="restoreBackup()">Restore to this TV</button></section>
+<p id="message" role="status"></p>
+<script>
+const token=new URLSearchParams(location.search).get('t');
+const el=id=>document.getElementById(id);
+function show(id){document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));el(id).classList.add('on')}
+async function post(path,values){const response=await fetch(path+'?t='+encodeURIComponent(token),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(values)});const text=await response.text();if(!response.ok)throw Error(text);return text}
+async function backup(){const one=el('pin1').value,two=el('pin2').value;if(!/^\d{6}$/.test(one)||one!==two){el('message').textContent='Enter and confirm the same six digit code.';return}el('makeBackup').disabled=true;el('message').textContent='Creating encrypted backup…';try{el('backupText').value=await post('/backup',{pin:one});show('backup-result');try{await navigator.clipboard.writeText(el('backupText').value);el('message').textContent='Copied to clipboard. On the new TV, scan its QR code and choose Restore.'}catch(error){el('message').textContent='Backup created. Tap “Copy backup text” below to copy it.';el('backupText').focus();el('backupText').select()}}catch(error){el('message').textContent='Backup failed: '+error.message}finally{el('makeBackup').disabled=false}}
+async function copyBackup(){const box=el('backupText');box.focus();box.select();try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(box.value);el('message').textContent='Copied to clipboard. On the new TV, scan its QR code and choose Restore.';return}}catch(error){}try{if(document.execCommand('copy')){el('message').textContent='Copied to clipboard. On the new TV, scan its QR code and choose Restore.';return}}catch(error){}box.focus();box.select();el('message').textContent='Backup text selected. Use your phone’s Copy command, then paste it on the new TV.'}
+async function pasteBackup(){const box=el('restoreText');try{if(navigator.clipboard&&navigator.clipboard.readText){box.value=await navigator.clipboard.readText();el('message').textContent='Backup pasted.';return}}catch(error){}box.focus();el('message').textContent='Tap and hold in the text box, then choose Paste from your phone’s menu.'}
+async function restoreBackup(){const code=el('restorePin').value,text=el('restoreText').value.trim();if(!/^\d{6}$/.test(code)){el('message').textContent='Enter all six digits.';return}if(!text){el('message').textContent='Paste the backup text first.';return}el('message').textContent='Restoring…';try{el('message').textContent=await post('/restore',{pin:code,data:text})}catch(error){el('message').textContent=error.message}}
+</script></body></html>"""
     }
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.1
+
+- **Reliable phone clipboard flow.** Make clipboard copy an explicit action with a visible
+  backup text field and phone-native copy/paste fallback when browser clipboard access is blocked.
+
 ## 2.1.0
 
 - **Phone-to-TV encrypted backup.** Scan a temporary QR code, create a six digit code on your
