@@ -19,8 +19,8 @@ No subscription and no D-TV server. Connect a provider or playlist you already u
 
 ### Choose a launcher banner
 
-Choose one of these six designs in **Settings → Display & Playback**. The selection also brands
-the logo shown in D-TV's navigation.
+Choose one of these six designs in **Settings → Display & Playback**. The selection also updates
+the Android phone app icon and the logo shown in D-TV's navigation.
 
 | Blue | Sunset | Ice |
 | :---: | :---: | :---: |

@@ -9,7 +9,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 
-/** Switches which TV launcher alias is visible so its banner matches the user's selection. */
+/** Switches the phone and TV launcher aliases so their icons match the user's selection. */
 object LauncherBranding {
     private val aliases = mapOf(
         AppSettings.LauncherStyle.BLUE to "io.github.bryjenko.dtv.LauncherBlue",

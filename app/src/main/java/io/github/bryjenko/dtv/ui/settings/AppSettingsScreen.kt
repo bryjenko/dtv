@@ -137,7 +137,7 @@ fun AppSettingsScreen(onBack: () -> Unit) {
 
         Spacer(Modifier.height(16.dp))
 
-        SettingsSection("Google TV launcher banner") {
+        SettingsSection("Phone app icon and Google TV banner") {
             Text(
                 "Choose the D-TV artwork shown in the Google TV apps row. The launcher may take a moment to refresh after you change it.",
                 style = MaterialTheme.typography.bodyMedium,

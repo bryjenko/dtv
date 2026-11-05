@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="launcher_blue_background">#06172D</color>
+    <color name="launcher_sunset_background">#270B32</color>
+    <color name="launcher_ice_background">#06323A</color>
+    <color name="launcher_neon_background">#180B32</color>
+    <color name="launcher_classic_background">#102B54</color>
+    <color name="launcher_red_background">#310A10</color>
+</resources>

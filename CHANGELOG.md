@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.3
+
+- **Matching phone app icons.** The selected logo style now updates the Android phone launcher
+  icon as well as the Google TV banner.
+
 ## 2.1.2
 
 - **Restore Settings focus.** Returning from a settings page now restores the previously
