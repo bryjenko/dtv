@@ -8,16 +8,15 @@ Working data is stored in the app's private SQLite database on the device. This 
 addresses and credentials, channel and on-demand catalogues, programme guide data, favourites,
 hidden channels, and resume positions.
 
-By default, this data stays on the device. If you explicitly use Google Drive backup, D-TV
-encrypts the configuration on the device with your six digit code before uploading it to your
-Google account's private app data area. D-TV does not operate that storage, and backup is not
-automatic sync.
+By default, this data stays on the device. If you use backup, D-TV encrypts the configuration
+with a six digit code and transfers it directly to a phone over your local network. The phone
+copies the encrypted text to its clipboard for pasting on another TV. D-TV has no cloud storage
+or backup server.
 
 ## Network connections
 
-D-TV connects to the provider and to media or artwork URLs supplied by the provider. Google Drive
-is contacted only when you use the backup or restore feature. The app does not send data to a
-D-TV-operated service.
+D-TV connects to the provider and to media or artwork URLs supplied by the provider. The backup
+transfer uses a temporary local-network connection only while its screen is open.
 
 ## Cleartext HTTP
 
@@ -27,8 +26,8 @@ traffic may read them. Use HTTPS when your provider offers it.
 
 ## Uninstalling
 
-Removing D-TV removes its local database and settings. A separately created encrypted Google
-Drive backup remains in your Google account until you delete it there.
+Removing D-TV removes its local database and settings. Encrypted backup text copied to a phone
+clipboard remains there until replaced or cleared by the phone.
 
 ## Reporting a privacy problem
 

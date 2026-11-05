@@ -1,41 +1,19 @@
-# Google Drive backup setup
+# Phone-to-TV backup and restore
 
-D-TV stores one encrypted configuration file in Google Drive's private `appDataFolder`. It is
-not shown in the normal Drive file list. The app requests only the Drive app-data permission; it
-does not read or modify the user's other Drive files.
+D-TV transfers configuration directly between a phone and a TV over the local network. No
+Google account or D-TV server is involved.
 
-Before the backup buttons can obtain access on a built APK, the app identity must be registered
-in a Google Cloud project:
+1. Open **Settings → Backup & restore** on the TV and scan its QR code with your phone.
+2. Choose **Backup**, create and confirm a six digit code. D-TV encrypts the backup on the TV;
+   the phone copies the encrypted text to its clipboard.
+3. On the new TV, open **Backup & restore**, scan its QR code, choose **Restore**, paste the
+   clipboard contents, and enter the six digit code.
 
-1. Enable the Google Drive API in the project.
-2. Configure the Google Auth consent screen, add the `drive.appdata` scope, and add the Google
-   accounts that will test the app if the consent screen is still in testing mode.
-3. Create an **Android** OAuth client for package name `io.github.bryjenko.dtv` and the SHA-1 fingerprint of
-   the certificate that signs the installed release APK. The release APK is signed by the D-TV
-   release key. For a debug APK, create a separate client for package `io.github.bryjenko.dtv.debug` and its
-   debug certificate.
-4. Install the APK that matches the registered package and certificate, then use the same Google
-   account on both TVs.
+The transfer includes provider entries and credentials, portable Display & Playback settings,
+hidden categories, and channel favourites, hidden state, custom names, and ordering. Channel
+choices are reapplied as the new TV downloads the provider catalogues.
 
-### `UNREGISTERED_ON_API_CONSOLE` during Google account access
-
-This means Google does not recognize the installed app's package-name and signing-certificate
-pair for the selected Cloud project. Create or correct the Android OAuth client using package
-`io.github.bryjenko.dtv` and the release APK's SHA-1 fingerprint. Also check that the Drive API is enabled and
-that the `drive.appdata` scope is configured on the consent screen. Debug APKs use a different
-package name and certificate, so a debug client does not authorize the release APK.
-
-To get the release certificate SHA-1 from the APK, download `dtv-v2.0.4.apk` from GitHub Releases
-and run this with the JDK's `keytool`:
-
-```text
-keytool -printcert -jarfile dtv-v2.0.4.apk
-```
-
-Use the SHA-1 value shown in the output when creating the Android OAuth client. Google documents
-the Android package-name and certificate-fingerprint fields in its
-[OAuth client setup guide](https://support.google.com/cloud/answer/15549257?hl=en).
-
-The six digit code is used locally to encrypt/decrypt the backup with AES-GCM and a salted,
-iterated HMAC-SHA256 key derivation. Google account authorization is still required to access the
-private backup. If the code is lost, the encrypted backup cannot be recovered.
+The TVs and phone must be on the same local network, and the Backup & restore screen must remain
+open during transfer. Some mobile browsers do not allow clipboard access on a local HTTP page;
+in that case, use the page's text box to copy or paste manually. The phone-created code protects
+the backup contents. D-TV does not retain the code and cannot recover it.

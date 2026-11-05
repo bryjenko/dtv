@@ -9,6 +9,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * The domain models double as Room entities.
@@ -84,6 +85,17 @@ data class Source(
 }
 
 enum class StreamKind { LIVE, MOVIE, SERIES }
+
+/** User-controlled channel state that can be carried to another device during setup restore. */
+@Serializable
+data class ChannelPreference(
+    val sourceId: Long,
+    val streamId: String,
+    val favourite: Boolean,
+    val hidden: Boolean,
+    val sortIndex: Int,
+    val customName: String? = null,
+)
 
 @Entity(
     tableName = "categories",

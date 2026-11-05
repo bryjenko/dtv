@@ -7,6 +7,7 @@ package io.github.bryjenko.dtv.core
 
 import android.content.Context
 import io.github.bryjenko.dtv.data.model.StremioAddon
+import io.github.bryjenko.dtv.data.model.ChannelPreference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,6 +47,25 @@ class AppSettings private constructor(context: Context) {
     }
 
     private val addonJson = Json { ignoreUnknownKeys = true }
+    private val channelPreferenceJson = Json { ignoreUnknownKeys = true }
+
+    /** Preferences imported before a provider catalogue has refreshed on this device. */
+    fun pendingChannelPreferences(): List<ChannelPreference> = runCatching {
+        prefs.getString(KEY_PENDING_CHANNEL_PREFERENCES, null)
+            ?.let { channelPreferenceJson.decodeFromString<List<ChannelPreference>>(it) }
+    }.getOrNull().orEmpty()
+
+    fun setPendingChannelPreferences(values: List<ChannelPreference>) {
+        prefs.edit().putString(KEY_PENDING_CHANNEL_PREFERENCES, channelPreferenceJson.encodeToString(values)).apply()
+    }
+
+    fun removeAppliedChannelPreferences(sourceId: Long, streamIds: Set<String>) {
+        if (streamIds.isEmpty()) return
+        val remaining = pendingChannelPreferences().filterNot {
+            it.sourceId == sourceId && it.streamId in streamIds
+        }
+        prefs.edit().putString(KEY_PENDING_CHANNEL_PREFERENCES, channelPreferenceJson.encodeToString(remaining)).apply()
+    }
 
     /** Export portable preferences only; granted USB folders and device sync IDs cannot travel. */
     fun portableBackupValues(): Map<String, String> = prefs.all
@@ -597,6 +617,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_PAD_END = "rec_pad_end_min"
         private const val KEY_REC_AUTOSWITCH = "rec_auto_switch"
         private const val KEY_LIVE_PAUSE = "live_pause_enabled"
+        private const val KEY_PENDING_CHANNEL_PREFERENCES = "pending_channel_preferences"
 
         const val MIN_UI_SCALE = 0.75f
         const val MAX_UI_SCALE = 1.0f

@@ -25,10 +25,10 @@ stranger with a broken channel being able to find the relevant code in under fiv
 
 ## No D-TV backend
 
-D-TV does not operate a server or user account. It has no web dashboard or automatic cloud
-sync. An optional, user-initiated configuration backup can save an encrypted file in the user's
-own Google Drive app data area. The app encrypts the configuration before upload; this is a
-backup and restore flow, not ongoing synchronization.
+D-TV does not operate a cloud server or user account. It has no web dashboard or automatic cloud
+sync. An optional, user-initiated backup transfers an encrypted configuration directly between
+the TV and a phone on the local network. The phone keeps the encrypted text on its clipboard for
+restoring to another TV.
 
 This is the single most important architectural decision in the project, and it is worth being
 explicit about why, because a web dashboard is a genuinely nice feature and users ask for it.
@@ -43,17 +43,16 @@ service that no longer exists.
 So D-TV stores working data on the device, in SQLite. The consequences are accepted honestly:
 
 - Setting up a second TV means restoring a backup or entering your details again. This is a real cost.
-- Favourites and channel ordering do not follow you between devices.
+- Channel choices follow a restore as the new TV refreshes the provider catalogues.
 
 And what is bought with it:
 
 - The app costs nothing to run, so it cannot be switched off.
-- Provider credentials are not sent to a D-TV server. If the user chooses Google Drive backup,
-  they are included in the locally encrypted backup stored in that user's Drive.
+- Provider credentials are not sent to a D-TV server. Backups are encrypted before they leave
+  the TV and are transferred directly to the user's phone.
 - It works with no internet connection to anything except your own provider.
 
-The Google Drive backup is optional and requires the user to configure Google OAuth for this
-fork. It avoids a service that the project has to fund.
+The local transfer works without a third-party account or a service the project has to fund.
 
 ## The EPG, and why it is written the way it is
 

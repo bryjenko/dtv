@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0
+
+- **Phone-to-TV encrypted backup.** Scan a temporary QR code, create a six digit code on your
+  phone, and copy the encrypted configuration to the phone clipboard. Paste it on another TV to
+  restore providers, display settings, hidden categories and channel preferences.
+- **No Google Drive setup.** Backup transfer runs directly over the local network and needs no
+  Google account, cloud service, or app authorization.
+
 ## 2.0.7
 
 - **Larger live TV buffer.** Normal playback now aims to hold at least 30 seconds ahead, with a

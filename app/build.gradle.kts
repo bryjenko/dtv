@@ -14,8 +14,8 @@ android {
         applicationId = "io.github.bryjenko.dtv"
         minSdk = 26
         targetSdk = 35
-        versionCode = 38
-        versionName = "2.0.7"
+        versionCode = 39
+        versionName = "2.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -140,7 +140,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.play.services.auth)
     // Storage Access Framework helpers - write recordings to a plugged-in USB / external
     // drive via a user-granted tree URI, with no storage permission.
     implementation(libs.androidx.documentfile)

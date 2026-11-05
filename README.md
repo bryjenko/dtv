@@ -15,7 +15,7 @@ No subscription and no D-TV server. Connect a provider or playlist you already u
 - Recordings to device storage, USB drives, or a NAS over SMB; reminders and series recording
 - Movies and series with resume, profiles, and watch history
 - A remote-friendly interface with adjustable sizing, language selection, and six launcher banner styles
-- Encrypted configuration backup to your own Google Drive using a six digit code
+- Encrypted phone-to-TV configuration backup using a six digit code
 
 ### Choose a launcher banner
 
@@ -34,16 +34,10 @@ Get the latest signed APK from [GitHub Releases](https://github.com/bryjenko/dtv
 D-TV requires Android 8.0 or newer. GitHub Actions builds every release from its tagged source;
 the build workflow and logs are public.
 
-## Google Drive backup setup
+## Backup and restore
 
-The backup is encrypted on the device before upload and uses Drive's private app-data area. Initial
-Google Cloud authorization setup is required before backup and restore can connect. The
-`UNREGISTERED_ON_API_CONSOLE` error means Google does not recognize the installed app's package and
-signing-certificate pair. In the Google Cloud project, enable the Google Drive API, allow the
-`drive.appdata` scope on the consent screen, and create an Android OAuth client for package
-`io.github.bryjenko.dtv` using the release APK's certificate SHA-1. If the consent screen is in testing mode,
-add the Google account as a test user. Download the [latest APK](https://github.com/bryjenko/dtv/releases/latest/download/dtv.apk)
-and read its SHA-1 with `keytool -printcert -jarfile dtv.apk`.
+Scan the QR code on the TV with a phone, then follow the Backup or Restore page. The encrypted
+configuration transfers directly over the local network. See [the backup guide](docs/BACKUP.md).
 
 ## Build from source
 

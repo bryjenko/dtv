@@ -9,6 +9,5 @@ a higher version code. Releases also need to use the persistent signing key conf
 Actions so Android accepts future updates over the installed app.
 
 The package ID is `io.github.bryjenko.dtv`. Because this differs from earlier builds, version
-2.0.3 installs as a separate app and starts with fresh local data. Google Drive backup also
-requires an Android OAuth client configured for this package and the release key's SHA-1; see
-[Google Drive backup setup](BACKUP.md).
+2.0.3 installs as a separate app and starts with fresh local data. Phone-to-TV backup transfers
+configuration directly over the local network; see [the backup guide](BACKUP.md).

@@ -245,6 +245,10 @@ interface ChannelDao {
     @Query("SELECT * FROM channels")
     suspend fun allForMatching(): List<Channel>
 
+    /** All live channels when exporting channel-list preferences to a device backup. */
+    @Query("SELECT * FROM channels ORDER BY sourceId, sortIndex, streamId")
+    suspend fun allForBackup(): List<Channel>
+
     @Upsert
     suspend fun upsertAll(channels: List<Channel>)
 

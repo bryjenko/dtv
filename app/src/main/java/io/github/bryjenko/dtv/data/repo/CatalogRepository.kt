@@ -134,6 +134,18 @@ class CatalogRepository(
     /** TMDB back-fill for VOD detail pages, gated on a user-supplied key. See [TmdbClient]. */
     private val tmdb = TmdbClient(http, settings)
 
+    /** Reapply saved user channel state as provider catalogues arrive after a device restore. */
+    private suspend fun replaceCatalogueApplyingBackup(sourceId: Long, incoming: List<Channel>, stamp: Long) {
+        val pending = settings.pendingChannelPreferences().filter { it.sourceId == sourceId }.associateBy { it.streamId }
+        val merged = incoming.map { channel ->
+            val saved = pending[channel.streamId] ?: return@map channel
+            channel.copy(favourite = saved.favourite, hidden = saved.hidden || channel.hidden,
+                sortIndex = saved.sortIndex, customName = saved.customName)
+        }
+        channelDao.replaceCatalogue(sourceId, merged, stamp)
+        settings.removeAppliedChannelPreferences(sourceId, incoming.map { it.streamId }.toSet())
+    }
+
     sealed interface SyncResult {
         data class Success(
             val channelCount: Int,
@@ -673,7 +685,7 @@ class CatalogRepository(
 
         categoryDao.upsertAll(liveCategories)
         val categoryNames = liveCategories.associate { it.id to it.name }
-        channelDao.replaceCatalogue(source.id, normalized(channels, categoryNames), nowUtcMillis)
+        replaceCatalogueApplyingBackup(source.id, normalized(channels, categoryNames), nowUtcMillis)
         sourceDao.markCatalogSynced(source.id, nowUtcMillis)
         return SyncResult.Success(channels.size, 0, 0)
     }
@@ -695,7 +707,7 @@ class CatalogRepository(
         }
         categoryDao.upsertAll(liveCategories)
         val categoryNames = liveCategories.associate { it.id to it.name }
-        channelDao.replaceCatalogue(source.id, normalized(channels, categoryNames), nowUtcMillis)
+        replaceCatalogueApplyingBackup(source.id, normalized(channels, categoryNames), nowUtcMillis)
         sourceDao.markCatalogSynced(source.id, nowUtcMillis)
         return SyncResult.Success(channels.size, 0, 0)
     }
@@ -779,7 +791,7 @@ class CatalogRepository(
 
         categoryDao.upsertAll(categories)
         val categoryNames = categories.associate { it.id to it.name }
-        channelDao.replaceCatalogue(source.id, normalized(parsed.channels, categoryNames), nowUtcMillis)
+        replaceCatalogueApplyingBackup(source.id, normalized(parsed.channels, categoryNames), nowUtcMillis)
 
         // If the playlist declared its own guide URL and the user did not set one, adopt it.
         if (source.epgUrl.isNullOrBlank() && !parsed.declaredEpgUrl.isNullOrBlank()) {

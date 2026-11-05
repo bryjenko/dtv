@@ -8,18 +8,18 @@ package io.github.bryjenko.dtv.backup
 import io.github.bryjenko.dtv.core.AppSettings
 import io.github.bryjenko.dtv.data.db.SourceDao
 import io.github.bryjenko.dtv.data.model.LiveStreamFormat
+import io.github.bryjenko.dtv.data.model.ChannelPreference
 import io.github.bryjenko.dtv.data.model.Source
 import io.github.bryjenko.dtv.data.model.SourceKind
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.security.SecureRandom
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 import javax.crypto.Cipher
 import javax.crypto.Mac
 import javax.crypto.spec.GCMParameterSpec
@@ -31,6 +31,7 @@ data class BackupPayload(
     val createdAt: Long,
     val preferences: Map<String, String>,
     val sources: List<SourceBackup>,
+    val channelPreferences: List<ChannelPreference> = emptyList(),
 )
 
 @Serializable
@@ -60,12 +61,15 @@ object ConfigBackup {
     private const val MAGIC = "DTVB"
     private const val ITERATIONS = 600_000
 
-    suspend fun create(settings: AppSettings, sources: SourceDao): ByteArray =
+    suspend fun create(settings: AppSettings, sources: SourceDao, channels: io.github.bryjenko.dtv.data.db.ChannelDao): ByteArray =
         json.encodeToString(
             BackupPayload(
                 createdAt = System.currentTimeMillis(),
                 preferences = settings.portableBackupValues(),
                 sources = sources.all().map(SourceBackup::from),
+                channelPreferences = channels.allForBackup().map {
+                    ChannelPreference(it.sourceId, it.streamId, it.favourite, it.hidden, it.sortIndex, it.customName)
+                },
             ),
         ).toByteArray(Charsets.UTF_8)
 
@@ -73,6 +77,7 @@ object ConfigBackup {
         json.decodeFromString<BackupPayload>(plaintext.toString(Charsets.UTF_8)).also {
         require(it.schema == 1) { "This backup was made by a newer D-TV version." }
         require(it.sources.size <= 100) { "The backup contains too many provider entries." }
+        require(it.channelPreferences.size <= 250_000) { "The backup contains too many channel preferences." }
         it.sources.forEach { source ->
             SourceKind.valueOf(source.kind)
             LiveStreamFormat.valueOf(source.liveFormat)
@@ -83,6 +88,7 @@ object ConfigBackup {
     suspend fun restore(payload: BackupPayload, settings: AppSettings, sources: SourceDao) {
         sources.replaceAllForRestore(payload.sources.map { it.source() })
         settings.restorePortableBackup(payload.preferences)
+        settings.setPendingChannelPreferences(payload.channelPreferences)
     }
 
     fun encrypt(plain: ByteArray, code: String): ByteArray {
@@ -93,8 +99,12 @@ object ConfigBackup {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, iv))
         cipher.updateAAD(MAGIC.toByteArray(Charsets.US_ASCII))
-        val ciphertext = cipher.doFinal(plain)
-        return MAGIC.toByteArray(Charsets.US_ASCII) + byteArrayOf(1) + salt + iv + ciphertext
+        val compressed = ByteArrayOutputStream().use { output ->
+            GZIPOutputStream(output).use { it.write(plain) }
+            output.toByteArray()
+        }
+        val ciphertext = cipher.doFinal(compressed)
+        return MAGIC.toByteArray(Charsets.US_ASCII) + byteArrayOf(2) + salt + iv + ciphertext
     }
 
     fun decrypt(encrypted: ByteArray, code: String): ByteArray {
@@ -102,13 +112,28 @@ object ConfigBackup {
         require(encrypted.size >= 49 && encrypted.copyOfRange(0, 4).toString(Charsets.US_ASCII) == MAGIC) {
             "This file is not a D-TV backup."
         }
-        require(encrypted[4].toInt() == 1) { "This backup uses an unsupported format." }
+        val format = encrypted[4].toInt()
+        require(format == 1 || format == 2) { "This backup uses an unsupported format." }
         val salt = encrypted.copyOfRange(5, 21)
         val iv = encrypted.copyOfRange(21, 33)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(deriveKey(code, salt), "AES"), GCMParameterSpec(128, iv))
         cipher.updateAAD(MAGIC.toByteArray(Charsets.US_ASCII))
-        return cipher.doFinal(encrypted.copyOfRange(33, encrypted.size))
+        val plaintext = cipher.doFinal(encrypted.copyOfRange(33, encrypted.size))
+        if (format == 1) return plaintext
+        return GZIPInputStream(ByteArrayInputStream(plaintext)).use { input ->
+            val output = ByteArrayOutputStream()
+            val buffer = ByteArray(8192)
+            var total = 0
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                total += count
+                require(total <= MAX_DECOMPRESSED_BYTES) { "This backup is too large to restore." }
+                output.write(buffer, 0, count)
+            }
+            output.toByteArray()
+        }
     }
 
     private fun deriveKey(code: String, salt: ByteArray): ByteArray {
@@ -123,46 +148,6 @@ object ConfigBackup {
         }
         return result
     }
-}
 
-/** Google Drive's hidden appDataFolder; the uploaded file contains ciphertext only. */
-class DriveBackupStore(private val client: OkHttpClient = OkHttpClient()) {
-    private val base = "https://www.googleapis.com/drive/v3/files"
-    private val upload = "https://www.googleapis.com/upload/drive/v3/files"
-
-    fun upload(token: String, encrypted: ByteArray) {
-        val existing = findLatest(token)
-        val request = if (existing == null) {
-            val metadata = """{"name":"dtv-config.enc","parents":["appDataFolder"]}"""
-            val body = MultipartBody.Builder().setType("multipart/related".toMediaType())
-                .addFormDataPart("metadata", null, metadata.toRequestBody("application/json; charset=utf-8".toMediaType()))
-                .addFormDataPart("file", "dtv-config.enc", encrypted.toRequestBody("application/octet-stream".toMediaType()))
-                .build()
-            Request.Builder().url("$upload?uploadType=multipart").header("Authorization", "Bearer $token").post(body).build()
-        } else {
-            Request.Builder().url("$upload/$existing?uploadType=media")
-                .header("Authorization", "Bearer $token")
-                .patch(encrypted.toRequestBody("application/octet-stream".toMediaType())).build()
-        }
-        execute(request)
-    }
-
-    fun download(token: String): ByteArray {
-        val id = findLatest(token) ?: error("No D-TV backup was found in this Google account.")
-        return execute(Request.Builder().url("$base/$id?alt=media").header("Authorization", "Bearer $token").get().build())
-    }
-
-    private fun findLatest(token: String): String? {
-        val q = "name = 'dtv-config.enc' and 'appDataFolder' in parents and trashed = false"
-        val encoded = java.net.URLEncoder.encode(q, "UTF-8")
-        val body = execute(Request.Builder().url("$base?q=$encoded&spaces=appDataFolder&orderBy=modifiedTime%20desc&pageSize=1&fields=files(id)")
-            .header("Authorization", "Bearer $token").get().build()).toString(Charsets.UTF_8)
-        return Regex("\"id\"\\s*:\\s*\"([^\"]+)\"").find(body)?.groupValues?.get(1)
-    }
-
-    private fun execute(request: Request): ByteArray = client.newCall(request).execute().use { response ->
-        val body = response.body?.bytes() ?: ByteArray(0)
-        if (!response.isSuccessful) error("Google Drive request failed (${response.code}). Check your connection and Google account access.")
-        body
-    }
+    private const val MAX_DECOMPRESSED_BYTES = 64 * 1024 * 1024
 }
