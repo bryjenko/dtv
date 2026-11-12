@@ -52,8 +52,9 @@ You need JDK 17+ and the Android SDK (API 35). The debug APK is written to
 
 ## Independent maintenance
 
-D-TV is maintained in this repository, with its own branding, releases, and build workflow. It is
-not configured to receive changes from another repository automatically.
+D-TV is an independently maintained project, with its own branding, releases, and build workflow.
+It is based on [OpenTV](https://github.com/opentvproject/opentv) (last synced at OpenTV v0.11.8).
+It is not configured to receive changes from another repository automatically.
 
 ## Licence
 

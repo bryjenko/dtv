@@ -2,13 +2,14 @@
 <!--
   This file is part of D-TV.
   Copyright (C) 2026 The OpenTV Contributors
+  Copyright (C) 2026 Bryan Jenkinson
   Licensed under the GNU General Public License v3.0 or later.
 
   Self-contained on purpose: no external CSS, no fonts, no analytics, no trackers.
   Nothing here phones home except one call to api.github.com to find the newest build.
 
   Nothing is hardcoded to a particular GitHub account either — the owner and repo are read
-  from this page's own URL at runtime, so the same file works whoever forks it.
+  from this page's own URL at runtime, so the page follows the repository it is published from.
 -->
 <html lang="en">
 <head>
@@ -414,8 +415,8 @@
   });
 
   // ---- Work out which repo this page belongs to -------------------------------------------
-  // Nothing is hardcoded to one GitHub account, so a fork's copy of this page points at the
-  // fork's own releases without anyone editing it.
+  // Nothing is hardcoded to one GitHub account, so a copy of this page points at the
+  // releases of the repository it is published from, without anyone editing it.
   function resolveRepo() {
     var host = location.hostname;                       // e.g. someone.github.io
     var segments = location.pathname.split("/").filter(Boolean);

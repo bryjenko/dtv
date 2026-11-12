@@ -1,6 +1,7 @@
 /*
  * This file is part of D-TV.
  * Copyright (C) 2026 The OpenTV Contributors
+ * Copyright (C) 2026 Bryan Jenkinson
  * Licensed under the GNU General Public License v3.0 or later.
  */
 package io.github.bryjenko.dtv.ui.settings
@@ -34,7 +35,7 @@ import io.github.bryjenko.dtv.update.UpdateChecker.CheckResult
 import io.github.bryjenko.dtv.update.UpdateUiState
 import kotlinx.coroutines.launch
 
-/** Shows the installed version and checks for updates published on this fork. */
+/** Shows the installed version and checks for updates published for this project. */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
