@@ -1,6 +1,7 @@
 /*
  * This file is part of D-TV.
  * Copyright (C) 2026 The OpenTV Contributors
+ * Copyright (C) 2026 Bryan Jenkinson
  * Licensed under the GNU General Public License v3.0 or later.
  */
 package io.github.bryjenko.dtv

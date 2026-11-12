@@ -1,6 +1,6 @@
 # D-TV repository and releases
 
-This repository is the independent D-TV fork at [github.com/bryjenko/dtv](https://github.com/bryjenko/dtv).
+This repository is the independently maintained D-TV project at [github.com/bryjenko/dtv](https://github.com/bryjenko/dtv).
 The Android package is `io.github.bryjenko.dtv`. Earlier D-TV APKs use a different package and
 will remain installed separately; settings and provider entries do not transfer automatically.
 

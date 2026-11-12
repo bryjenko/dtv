@@ -6,10 +6,10 @@ project is for.
 
 ## Code and licensing
 
-D-TV is an independent fork distributed under GPL-3.0-or-later. Please keep contributions
-compatible with that license, preserve required attribution, and do not submit proprietary or
-leaked code. When adapting code from another open-source project, identify its source and license
-so its attribution can be preserved.
+D-TV is an independently maintained project based on [OpenTV](https://github.com/opentvproject/opentv),
+distributed under GPL-3.0-or-later. Please keep contributions compatible with that license,
+preserve required attribution, and do not submit proprietary or leaked code. When adapting code
+from another open-source project, identify its source and license so its attribution can be preserved.
 
 ## Reporting a bug
 
