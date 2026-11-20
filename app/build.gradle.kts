@@ -14,8 +14,8 @@ android {
         applicationId = "io.github.bryjenko.dtv"
         minSdk = 26
         targetSdk = 35
-        versionCode = 44
-        versionName = "2.1.5"
+        versionCode = 45
+        versionName = "2.1.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
