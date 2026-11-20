@@ -213,6 +213,14 @@ class CatalogRepository(
 
     suspend fun episode(id: Long): Episode? = episodeDao.byId(id)
 
+    /** A show looked up by the provider's own series id, inside one playlist. */
+    suspend fun seriesByProvider(sourceId: Long, seriesId: String): Series? =
+        seriesDao.bySourceAndSeriesId(sourceId, seriesId)
+
+    /** Episodes of one show on one playlist, in season order. Local only — no network. */
+    suspend fun episodesFor(sourceId: Long, seriesId: String): List<Episode> =
+        episodeDao.listForSeries(sourceId, seriesId)
+
     suspend fun movieByStreamUrl(url: String): Movie? = movieDao.byStreamUrl(url)
 
     suspend fun episodeByStreamUrl(url: String): Episode? = episodeDao.byStreamUrl(url)

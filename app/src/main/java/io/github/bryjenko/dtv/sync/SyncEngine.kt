@@ -183,11 +183,9 @@ class SyncEngine(private val graph: ServiceLocator.Graph) {
         var positions = 0
         for (item in bundle.positions) {
             val profileId = profileIdFor(item.profile) ?: continue
-            val localId = when (item.kind) {
-                "movie" -> graph.catalogRepository.movieByStreamUrl(item.streamUrl)?.id
-                "ep" -> graph.catalogRepository.episodeByStreamUrl(item.streamUrl)?.id
-                else -> null
-            } ?: continue
+            val movie = if (item.kind == "movie") graph.catalogRepository.movieByStreamUrl(item.streamUrl) else null
+            val episode = if (item.kind == "ep") graph.catalogRepository.episodeByStreamUrl(item.streamUrl) else null
+            val localId = movie?.id ?: episode?.id ?: continue
             val mediaKey = "${item.kind}:$localId"
             val existing = graph.playbackPositions.get(profileId, mediaKey)
             if (existing == null || item.updatedAtMillis > existing.updatedAtMillis) {
@@ -198,6 +196,8 @@ class SyncEngine(private val graph: ServiceLocator.Graph) {
                         positionMillis = item.positionMillis,
                         durationMillis = item.durationMillis,
                         updatedAtMillis = item.updatedAtMillis,
+                        // Keep the row tied to the playlist the local catalogue row belongs to.
+                        sourceId = movie?.sourceId ?: episode?.sourceId ?: existing?.sourceId ?: 0L,
                     ),
                 )
                 positions++

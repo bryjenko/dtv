@@ -54,7 +54,9 @@ import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Subtitles
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -295,6 +297,14 @@ fun PlayerScreen(
                 showBackgroundPrompt = true
             }
         }
+        interaction++
+    }
+
+    fun toggleFavourite() {
+        val channel = variants.firstOrNull { it.id == currentId } ?: return
+        val next = !channel.favourite
+        variants = variants.map { if (it.id == channel.id) it.copy(favourite = next) else it }
+        scope.launch { graph.catalogRepository.setChannelFavourite(channel.id, next) }
         interaction++
     }
 
@@ -540,7 +550,7 @@ fun PlayerScreen(
                     Spacer(Modifier.height(16.dp))
                 }
 
-                if (channelTitle.isNotEmpty()) {
+                    if (channelTitle.isNotEmpty()) {
                     Text(
                         channelTitle,
                         style = MaterialTheme.typography.headlineSmall,
@@ -567,6 +577,19 @@ fun PlayerScreen(
                         paused = !paused
                         controller.player.playWhenReady = !paused
                         interaction++
+                    }
+                    if (currentId != null) {
+                        val currentChannel = variants.firstOrNull { it.id == currentId }
+                        Spacer(Modifier.width(10.dp))
+                        BarChip(
+                            icon = if (currentChannel?.favourite == true) Icons.Filled.Star
+                            else Icons.Outlined.StarOutline,
+                            label = stringResource(
+                                if (currentChannel?.favourite == true) R.string.common_remove_favourite
+                                else R.string.common_favourite,
+                            ),
+                            selected = currentChannel?.favourite == true,
+                        ) { toggleFavourite() }
                     }
                     if (controller.isSeekable) {
                         Spacer(Modifier.width(10.dp))

@@ -28,6 +28,7 @@
     <string name="nav_movies">Movies</string>
     <string name="nav_shows">Shows</string>
     <string name="nav_recordings">Recordings</string>
+    <string name="nav_my_list">My List</string>
     <string name="nav_search">Search</string>
     <string name="nav_settings">Settings</string>
 
@@ -437,6 +438,23 @@
     <string name="vod_all">All</string>
     <string name="vod_search_hint">Search movies &amp; shows</string>
     <string name="vod_continue_watching">Continue watching</string>
+
+    <!-- ============================ My List ============================ -->
+    <string name="mylist_movies">Continue watching · Movies</string>
+    <string name="mylist_shows">Continue watching · TV shows</string>
+    <string name="mylist_channels">Favourite channels</string>
+    <string name="mylist_hint">Press OK or tap to resume or tune in. Hold OK, long-press, or Menu for Start over and Remove.</string>
+    <string name="mylist_empty_title">Nothing in My List yet</string>
+    <string name="mylist_empty_body">Films and shows you start will wait here. Star a channel in Live TV, or from the player, and it will too.</string>
+    <string name="mylist_movies_empty">No movies in progress.</string>
+    <string name="mylist_shows_empty">No shows in progress.</string>
+    <string name="mylist_channels_empty">No favourite channels yet. Star a channel in Live TV and it lands here.</string>
+    <string name="mylist_start_over">Start over</string>
+    <string name="mylist_play_next">Play next episode</string>
+    <string name="mylist_watch_again">Watch again</string>
+    <string name="mylist_remove">Remove from My List</string>
+    <string name="mylist_next_episode">Next · S%1$d E%2$d</string>
+    <string name="mylist_next_badge">Next</string>
     <string name="vod_large_provider_note">A large provider can take a couple of minutes the first time.</string>
     <string name="vod_recommended">Recommended for you</string>
     <string name="vod_recently_added">Recently added</string>
