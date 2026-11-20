@@ -1070,10 +1070,10 @@ class VodViewModel(app: Application) : AndroidViewModel(app) {
     fun collapseVariants(movies: List<Movie>): List<MovieVariantGroup> =
         graph.catalogRepository.collapseVariants(movies)
 
-    /** Star / un-star a whole series. Wraps the series DAO through the shared database — no data-layer change. */
+    /** Star / un-star a whole series. Same flag My List reads, on this show's playlist row. */
     fun toggleSeriesFavourite(series: Series) {
         viewModelScope.launch {
-            graph.database.series().setFavourite(series.id, !series.favourite)
+            graph.catalogRepository.setSeriesFavourite(series.id, !series.favourite)
         }
     }
 

@@ -13,16 +13,23 @@ import io.github.bryjenko.dtv.core.ServiceLocator
 import io.github.bryjenko.dtv.data.PlaybackProgressStore
 import io.github.bryjenko.dtv.data.model.CatalogEpisode
 import io.github.bryjenko.dtv.data.model.Channel
+import io.github.bryjenko.dtv.data.model.FavouriteSeriesKey
+import io.github.bryjenko.dtv.data.model.FavouriteSeriesResume
+import io.github.bryjenko.dtv.data.model.Movie
 import io.github.bryjenko.dtv.data.model.PlaybackPosition
+import io.github.bryjenko.dtv.data.model.Series
 import io.github.bryjenko.dtv.data.model.SeriesContinue
+import io.github.bryjenko.dtv.data.model.SeriesResume
 import io.github.bryjenko.dtv.data.model.WatchProgress
 import io.github.bryjenko.dtv.data.model.WatchedEpisode
+import io.github.bryjenko.dtv.data.model.WatchedEpisodeProgress
 import io.github.bryjenko.dtv.data.model.parseMediaKey
 import io.github.bryjenko.dtv.data.parser.displayTitle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -30,9 +37,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * My List: movies still in progress, one row per series (resume or the next episode), and the
- * channels already starred in the guide. Progress is the existing playback-position table, stamped
- * with the playlist id so two providers stay apart. Favourites are the existing channel flag.
+ * My List: movies still in progress, one row per series (resume or the next episode), starred
+ * films and shows, and the channels already starred in the guide.
+ *
+ * Progress is the existing playback-position table, stamped with the playlist id so two providers
+ * stay apart. Favourites are the flags the star already writes: on the channel, on the movie,
+ * and on the series. Each of those rows belongs to one playlist.
  */
 class MyListViewModel(app: Application) : AndroidViewModel(app) {
     private val graph = ServiceLocator.get(app)
@@ -72,6 +82,15 @@ class MyListViewModel(app: Application) : AndroidViewModel(app) {
         val episodeIds: List<Long>,
     )
 
+    /**
+     * A starred show. [resume] is set only when an episode of this show, on this playlist, is
+     * still in progress — OK plays that episode. Otherwise OK opens the series page.
+     */
+    data class FavouriteShow(
+        val series: Series,
+        val resume: SeriesResume?,
+    )
+
     data class Content(
         val movies: List<MovieItem> = emptyList(),
         val shows: List<ShowItem> = emptyList(),
@@ -84,6 +103,27 @@ class MyListViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Content())
 
     val channels: StateFlow<List<Channel>> = graph.catalogRepository.observeFavouriteChannels()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** The movie page's star. Room emits again whenever that flag changes. */
+    val favouriteMovies: StateFlow<List<Movie>> = graph.catalogRepository.observeFavouriteMovies()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * The series page's star, plus the in-progress episode (if any) so OK can resume it.
+     * Both inputs are flows, so starring, unstarring, or moving through an episode updates the row.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val favouriteShows: StateFlow<List<FavouriteShow>> = combine(
+        graph.catalogRepository.observeFavouriteSeries(),
+        settings.activeProfileId.flatMapLatest { profileId ->
+            graph.playbackPositions.observeForProfile(profileId)
+        },
+    ) { series, positions -> series to positions }
+        .mapLatest { (series, positions) ->
+            if (series.isEmpty()) emptyList()
+            else withContext(Dispatchers.IO) { resolveFavouriteShows(series, positions) }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun removeMovie(mediaKey: String) {
@@ -117,6 +157,20 @@ class MyListViewModel(app: Application) : AndroidViewModel(app) {
     fun unfavourite(channel: Channel) {
         viewModelScope.launch {
             graph.catalogRepository.setChannelFavourite(channel.id, false)
+        }
+    }
+
+    /** Clears the same flag the movie page's star sets. */
+    fun unfavouriteMovie(movie: Movie) {
+        viewModelScope.launch {
+            graph.catalogRepository.setMovieFavourite(movie.id, false)
+        }
+    }
+
+    /** Clears the same flag the series page's star sets. */
+    fun unfavouriteShow(series: Series) {
+        viewModelScope.launch {
+            graph.catalogRepository.setSeriesFavourite(series.id, false)
         }
     }
 
@@ -226,6 +280,36 @@ class MyListViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         return out
+    }
+
+    private suspend fun resolveFavouriteShows(
+        series: List<Series>,
+        positions: List<PlaybackPosition>,
+    ): List<FavouriteShow> {
+        val episodes = mutableListOf<WatchedEpisodeProgress>()
+        for (pos in positions) {
+            val parsed = parseMediaKey(pos.mediaKey) ?: continue
+            if (parsed.kind != "ep") continue
+            if (!WatchProgress.keepOnContinueWatching(pos.positionMillis, pos.durationMillis)) continue
+            val episode = graph.catalogRepository.episode(parsed.id) ?: continue
+            episodes += WatchedEpisodeProgress(
+                sourceId = episode.sourceId,
+                providerSeriesId = episode.seriesId,
+                episodeId = episode.id,
+                season = episode.season,
+                episodeNumber = episode.episodeNumber,
+                title = episode.title,
+                streamUrl = episode.streamUrl,
+                positionMillis = pos.positionMillis,
+                durationMillis = pos.durationMillis,
+                updatedAtMillis = pos.updatedAtMillis,
+            )
+        }
+        val resumes = FavouriteSeriesResume.pick(
+            favourites = series.map { FavouriteSeriesKey(it.id, it.sourceId, it.seriesId) },
+            episodes = episodes,
+        )
+        return series.map { FavouriteShow(it, resumes[it.id]) }
     }
 
     private fun fraction(position: Long, duration: Long): Float =
