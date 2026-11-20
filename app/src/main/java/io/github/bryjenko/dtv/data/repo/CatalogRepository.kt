@@ -173,6 +173,12 @@ class CatalogRepository(
 
     fun observeFavouriteChannels(): Flow<List<Channel>> = channelDao.observeFavourites()
 
+    /** Starred films. The flag is the one the movie page's star writes, one row per playlist. */
+    fun observeFavouriteMovies(): Flow<List<Movie>> = movieDao.observeFavourites()
+
+    /** Starred shows. The flag is the one the series page's star writes, one row per playlist. */
+    fun observeFavouriteSeries(): Flow<List<Series>> = seriesDao.observeFavourites()
+
     /** Reactive number of visible channels on disk — the UI uses this to tell "guide still
      * building" (channels exist) apart from "nothing loaded" (a failed or empty sync). */
     fun observeChannelCount(): Flow<Int> = channelDao.observeVisibleCount()
@@ -615,6 +621,10 @@ class CatalogRepository(
 
     suspend fun setMovieFavourite(id: Long, favourite: Boolean) =
         movieDao.setFavourite(id, favourite)
+
+    /** Same column the series page's star writes. Keyed by the series row, which is one playlist. */
+    suspend fun setSeriesFavourite(id: Long, favourite: Boolean) =
+        seriesDao.setFavourite(id, favourite)
 
     // --- Sync helpers: read/apply curation by stable stream URL ---
     suspend fun favouriteChannelUrls(): List<String> = channelDao.favouriteUrls()

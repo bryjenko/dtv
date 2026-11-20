@@ -222,6 +222,8 @@ fun MainScreen(
                 Tab.RECORDINGS -> RecordingsScreen(onPlay = onPlayRecording)
                 Tab.MY_LIST -> MyListScreen(
                     onPlayChannel = onPlayChannel,
+                    onOpenMovie = onOpenMovie,
+                    onOpenSeries = onOpenSeries,
                     onResume = onResume,
                 )
             }

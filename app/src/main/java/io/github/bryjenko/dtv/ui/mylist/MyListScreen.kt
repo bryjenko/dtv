@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,29 +61,38 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import io.github.bryjenko.dtv.R
 import io.github.bryjenko.dtv.data.model.Channel
+import io.github.bryjenko.dtv.data.model.Movie
+import io.github.bryjenko.dtv.data.model.Series
 import io.github.bryjenko.dtv.data.model.shownName
+import io.github.bryjenko.dtv.data.parser.displayTitle
 import io.github.bryjenko.dtv.ui.channels.remoteSelectOrLongSelect
 import kotlinx.coroutines.delay
 
 /**
  * My List, in the left-hand rail under Recordings.
  *
- * Three groups, top to bottom: movies still in progress, one card per TV series, and favourite
- * live channels. OK (or a tap) resumes or tunes. Holding OK, or the Menu key, opens Resume /
- * Start over / Remove. Empty groups say so; an empty page says so once.
+ * Groups, top to bottom, and only when that group has something in it: movies still in progress,
+ * one card per TV series, starred films, starred shows, and favourite live channels. OK (or a tap)
+ * resumes, opens the title, or tunes. Holding OK, or the Menu key, opens the same actions as
+ * before, including Remove from My List. An empty page says so once.
  */
 @Composable
 fun MyListScreen(
     onPlayChannel: (Channel) -> Unit,
+    onOpenMovie: (Movie) -> Unit,
+    onOpenSeries: (Series) -> Unit,
     onResume: (mediaKey: String, url: String, title: String) -> Unit,
     viewModel: MyListViewModel = viewModel(),
 ) {
     val content by viewModel.content.collectAsState()
     val channels by viewModel.channels.collectAsState()
+    val favouriteMovies by viewModel.favouriteMovies.collectAsState()
+    val favouriteShows by viewModel.favouriteShows.collectAsState()
     var menu by remember { mutableStateOf<MyListMenu?>(null) }
     val movies = content.movies
     val shows = content.shows
-    val empty = movies.isEmpty() && shows.isEmpty() && channels.isEmpty()
+    val empty = movies.isEmpty() && shows.isEmpty() && channels.isEmpty() &&
+        favouriteMovies.isEmpty() && favouriteShows.isEmpty()
 
     if (empty) {
         EmptyMyList()
@@ -106,15 +116,10 @@ fun MyListScreen(
                     modifier = Modifier.padding(start = 8.dp, bottom = 8.dp),
                 )
             }
-            item(key = "movies-header") { GroupHeader(stringResource(R.string.mylist_movies)) }
-            if (movies.isEmpty()) {
-                item(key = "movies-empty") { EmptyLine(stringResource(R.string.mylist_movies_empty)) }
-            } else {
+            if (movies.isNotEmpty()) {
+                item(key = "movies-header") { GroupHeader(stringResource(R.string.mylist_movies)) }
                 item(key = "movies-row") {
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
+                    CardRow {
                         items(movies, key = { it.mediaKey }) { item ->
                             ProgressCard(
                                 title = item.title,
@@ -123,21 +128,16 @@ fun MyListScreen(
                                 progress = item.progress,
                                 badge = null,
                                 onClick = { onResume(item.mediaKey, item.streamUrl, item.title) },
-                                onMenu = { menu = MyListMenu.Movie(item) },
+                                onMenu = { menu = MyListMenu.ContinueMovie(item) },
                             )
                         }
                     }
                 }
             }
-            item(key = "shows-header") { GroupHeader(stringResource(R.string.mylist_shows)) }
-            if (shows.isEmpty()) {
-                item(key = "shows-empty") { EmptyLine(stringResource(R.string.mylist_shows_empty)) }
-            } else {
+            if (shows.isNotEmpty()) {
+                item(key = "shows-header") { GroupHeader(stringResource(R.string.mylist_shows)) }
                 item(key = "shows-row") {
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
+                    CardRow {
                         items(shows, key = { it.seriesKey }) { item ->
                             val subtitle = if (item.playingNext) {
                                 stringResource(R.string.mylist_next_episode, item.season, item.episodeNumber)
@@ -153,16 +153,59 @@ fun MyListScreen(
                                 onClick = {
                                     onResume(item.playMediaKey, item.playStreamUrl, playTitle(item))
                                 },
-                                onMenu = { menu = MyListMenu.Show(item) },
+                                onMenu = { menu = MyListMenu.ContinueShow(item) },
                             )
                         }
                     }
                 }
             }
-            item(key = "channels-header") { GroupHeader(stringResource(R.string.mylist_channels)) }
-            if (channels.isEmpty()) {
-                item(key = "channels-empty") { EmptyLine(stringResource(R.string.mylist_channels_empty)) }
-            } else {
+            if (favouriteShows.isNotEmpty()) {
+                item(key = "fav-shows-header") { GroupHeader(stringResource(R.string.mylist_favourite_shows)) }
+                item(key = "fav-shows-row") {
+                    CardRow {
+                        items(favouriteShows, key = { it.series.id }) { item ->
+                            val resume = item.resume
+                            ProgressCard(
+                                title = item.series.displayTitle,
+                                imageUrl = item.series.posterUrl ?: item.series.backdropUrl,
+                                subtitle = resume?.let {
+                                    episodeLabel(it.season, it.episodeNumber, it.episodeTitle)
+                                },
+                                progress = resume?.progress,
+                                badge = null,
+                                onClick = {
+                                    if (resume != null) {
+                                        onResume(resume.mediaKey, resume.streamUrl, favouriteShowPlayTitle(item))
+                                    } else {
+                                        onOpenSeries(item.series)
+                                    }
+                                },
+                                onMenu = { menu = MyListMenu.FavouriteShow(item) },
+                            )
+                        }
+                    }
+                }
+            }
+            if (favouriteMovies.isNotEmpty()) {
+                item(key = "fav-movies-header") { GroupHeader(stringResource(R.string.mylist_favourite_movies)) }
+                item(key = "fav-movies-row") {
+                    CardRow {
+                        items(favouriteMovies, key = { it.id }) { movie ->
+                            ProgressCard(
+                                title = movie.displayTitle,
+                                imageUrl = movie.posterUrl ?: movie.backdropUrl,
+                                subtitle = null,
+                                progress = null,
+                                badge = null,
+                                onClick = { onOpenMovie(movie) },
+                                onMenu = { menu = MyListMenu.FavouriteMovie(movie) },
+                            )
+                        }
+                    }
+                }
+            }
+            if (channels.isNotEmpty()) {
+                item(key = "channels-header") { GroupHeader(stringResource(R.string.mylist_channels)) }
                 items(channels, key = { "ch-${it.id}" }) { channel ->
                     FavouriteChannelRow(
                         channel = channel,
@@ -187,9 +230,11 @@ fun MyListScreen(
             },
             onRemove = {
                 when (target) {
-                    is MyListMenu.Movie -> viewModel.removeMovie(target.item.mediaKey)
-                    is MyListMenu.Show -> viewModel.removeShow(target.item)
+                    is MyListMenu.ContinueMovie -> viewModel.removeMovie(target.item.mediaKey)
+                    is MyListMenu.ContinueShow -> viewModel.removeShow(target.item)
                     is MyListMenu.Favourite -> viewModel.unfavourite(target.channel)
+                    is MyListMenu.FavouriteMovie -> viewModel.unfavouriteMovie(target.movie)
+                    is MyListMenu.FavouriteShow -> viewModel.unfavouriteShow(target.item.series)
                 }
                 menu = null
             },
@@ -199,9 +244,21 @@ fun MyListScreen(
 }
 
 private sealed interface MyListMenu {
-    data class Movie(val item: MyListViewModel.MovieItem) : MyListMenu
-    data class Show(val item: MyListViewModel.ShowItem) : MyListMenu
+    data class ContinueMovie(val item: MyListViewModel.MovieItem) : MyListMenu
+    data class ContinueShow(val item: MyListViewModel.ShowItem) : MyListMenu
     data class Favourite(val channel: Channel) : MyListMenu
+    data class FavouriteMovie(val movie: Movie) : MyListMenu
+    data class FavouriteShow(val item: MyListViewModel.FavouriteShow) : MyListMenu
+}
+
+/** Same horizontal strip the continue-watching cards use, so D-pad focus moves the same way. */
+@Composable
+private fun CardRow(content: LazyListScope.() -> Unit) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        content = content,
+    )
 }
 
 @Composable
@@ -212,16 +269,6 @@ private fun GroupHeader(title: String) {
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 2.dp),
-    )
-}
-
-@Composable
-private fun EmptyLine(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 8.dp, bottom = 8.dp),
     )
 }
 
@@ -409,7 +456,7 @@ private fun MyListActionDialog(
     val body: String?
     val actions: List<Pair<String, () -> Unit>>
     when (target) {
-        is MyListMenu.Movie -> {
+        is MyListMenu.ContinueMovie -> {
             val item = target.item
             title = item.title
             body = null
@@ -420,7 +467,7 @@ private fun MyListActionDialog(
                 cancelLabel to onDismiss,
             )
         }
-        is MyListMenu.Show -> {
+        is MyListMenu.ContinueShow -> {
             val item = target.item
             title = item.seriesTitle
             body = episodeLabel(item.season, item.episodeNumber, item.episodeTitle)
@@ -453,6 +500,29 @@ private fun MyListActionDialog(
                 removeFavouriteLabel to onRemove,
                 cancelLabel to onDismiss,
             )
+        }
+        is MyListMenu.FavouriteMovie -> {
+            title = target.movie.displayTitle
+            body = null
+            actions = listOf(
+                removeLabel to onRemove,
+                cancelLabel to onDismiss,
+            )
+        }
+        is MyListMenu.FavouriteShow -> {
+            val item = target.item
+            val resume = item.resume
+            title = item.series.displayTitle
+            body = resume?.let { episodeLabel(it.season, it.episodeNumber, it.episodeTitle) }
+            actions = buildList {
+                if (resume != null) {
+                    add(resumeLabel to {
+                        onResume(resume.mediaKey, resume.streamUrl, favouriteShowPlayTitle(item))
+                    })
+                }
+                add(removeLabel to onRemove)
+                add(cancelLabel to onDismiss)
+            }
         }
     }
 
@@ -516,4 +586,11 @@ private fun episodeLabel(season: Int, episode: Int, title: String): String {
 private fun playTitle(item: MyListViewModel.ShowItem): String {
     val episode = episodeLabel(item.season, item.episodeNumber, item.episodeTitle)
     return if (item.seriesTitle.isBlank()) episode else "${item.seriesTitle} · $episode"
+}
+
+private fun favouriteShowPlayTitle(item: MyListViewModel.FavouriteShow): String {
+    val resume = item.resume ?: return item.series.displayTitle
+    val episode = episodeLabel(resume.season, resume.episodeNumber, resume.episodeTitle)
+    val name = item.series.displayTitle
+    return if (name.isBlank()) episode else "$name · $episode"
 }

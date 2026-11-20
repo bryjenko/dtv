@@ -442,10 +442,12 @@
     <!-- ============================ My List ============================ -->
     <string name="mylist_movies">Continue watching · Movies</string>
     <string name="mylist_shows">Continue watching · TV shows</string>
+    <string name="mylist_favourite_shows">Favourite TV shows</string>
+    <string name="mylist_favourite_movies">Favourite movies</string>
     <string name="mylist_channels">Favourite channels</string>
-    <string name="mylist_hint">Press OK or tap to resume or tune in. Hold OK, long-press, or Menu for Start over and Remove.</string>
+    <string name="mylist_hint">Press OK or tap to resume, open, or tune in. Hold OK, long-press, or Menu for Start over and Remove from My List.</string>
     <string name="mylist_empty_title">Nothing in My List yet</string>
-    <string name="mylist_empty_body">Films and shows you start will wait here. Star a channel in Live TV, or from the player, and it will too.</string>
+    <string name="mylist_empty_body">Films and shows you start will wait here. Star a film, a show, or a channel and it will too.</string>
     <string name="mylist_movies_empty">No movies in progress.</string>
     <string name="mylist_shows_empty">No shows in progress.</string>
     <string name="mylist_channels_empty">No favourite channels yet. Star a channel in Live TV and it lands here.</string>
