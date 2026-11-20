@@ -92,6 +92,8 @@ import io.github.bryjenko.dtv.R
 import io.github.bryjenko.dtv.core.ServiceLocator
 import io.github.bryjenko.dtv.core.SleepTimer
 import io.github.bryjenko.dtv.core.findActivity
+import io.github.bryjenko.dtv.data.PlaybackProgressStore
+import io.github.bryjenko.dtv.data.model.parseMediaKey
 import io.github.bryjenko.dtv.player.PlayerController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -155,6 +157,9 @@ fun VodPlayerScreen(
     val panelFocus = remember { FocusRequester() }
     var positionMs by remember { mutableLongStateOf(0L) }
     var durationMs by remember { mutableLongStateOf(0L) }
+    // The playlist this title belongs to. Read at dispose time, so a holder rather than a plain
+    // long — the dispose block must see the value loaded after the first frame, not the initial 0.
+    val sourceHolder = remember { mutableLongStateOf(0L) }
     var scrubbing by remember { mutableStateOf(false) }
     var scrubValue by remember { mutableFloatStateOf(0f) }
 
@@ -165,21 +170,22 @@ fun VodPlayerScreen(
 
     fun reveal() { controlsVisible = true; interaction++ }
 
-    suspend fun savePosition() {
+    suspend fun savePosition(pos: Long, dur: Long) {
+        PlaybackProgressStore.save(
+            dao = graph.playbackPositions,
+            profileId = settings.activeProfileId.value,
+            sourceId = sourceHolder.longValue,
+            mediaKey = mediaKey,
+            positionMillis = pos,
+            durationMillis = dur,
+        )
+    }
+
+    fun saveFromPlayer() {
         val player = controller.player
         val pos = player.currentPosition
-        val dur = player.duration.takeIf { it > 0 } ?: return
-        if (pos > 5_000) {
-            graph.playbackPositions.upsert(
-                io.github.bryjenko.dtv.data.model.PlaybackPosition(
-                    profileId = settings.activeProfileId.value,
-                    mediaKey = mediaKey,
-                    positionMillis = pos,
-                    durationMillis = dur,
-                    updatedAtMillis = System.currentTimeMillis(),
-                ),
-            )
-        }
+        val dur = player.duration
+        scope.launch { savePosition(pos, dur) }
     }
 
     // Keep the screen awake during playback — see the note in PlayerScreen; a film is exactly when
@@ -189,15 +195,34 @@ fun VodPlayerScreen(
         window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         view.keepScreenOn = true
         onDispose {
+            // Snapshot before release, then cancel the periodic saver so an in-flight write cannot
+            // land after this one and put an older position back. The write itself runs on a scope
+            // that dispose does not cancel — leaving the screen is exactly when progress must stick.
+            val pos = runCatching { controller.player.currentPosition }.getOrDefault(0L)
+            val dur = runCatching { controller.player.duration }.getOrDefault(0L)
+            val profileId = settings.activeProfileId.value
+            val sourceId = sourceHolder.longValue
+            val key = mediaKey
+            val dao = graph.playbackPositions
             window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             view.keepScreenOn = false
-            scope.launch { savePosition() }
-            controller.release()
             scope.cancel()
+            controller.release()
+            CoroutineScope(Dispatchers.IO).launch {
+                PlaybackProgressStore.save(
+                    dao = dao,
+                    profileId = profileId,
+                    sourceId = sourceId,
+                    mediaKey = key,
+                    positionMillis = pos,
+                    durationMillis = dur,
+                )
+            }
         }
     }
 
     LaunchedEffect(mediaKey) {
+        sourceHolder.longValue = sourceIdFor(graph, mediaKey)
         val resumeFrom = graph.playbackPositions.get(settings.activeProfileId.value, mediaKey)
             ?.takeIf { !it.isFinished }?.positionMillis ?: 0L
         controller.play(
@@ -212,7 +237,7 @@ fun VodPlayerScreen(
         )
         while (isActive) {
             delay(15_000)
-            savePosition()
+            saveFromPlayer()
         }
     }
 
@@ -397,6 +422,7 @@ fun VodPlayerScreen(
                             positionMs = scrubValue.toLong()
                             scrubbing = false
                             interaction++
+                            saveFromPlayer()
                         },
                         modifier = Modifier.weight(1f),
                     )
@@ -419,6 +445,9 @@ fun VodPlayerScreen(
                         paused = !paused
                         controller.player.playWhenReady = !paused
                         interaction++
+                        // Pause is a stop the user expects to come back from. Write it now, not on
+                        // the next 15-second tick.
+                        if (paused) saveFromPlayer()
                     }
                     Spacer(Modifier.width(10.dp))
                     VodChip(Icons.Filled.FastForward, stringResource(R.string.player_forward)) {
@@ -550,6 +579,15 @@ private fun vodTrackLabel(label: String?, language: String?, index: Int): String
         return runCatching { java.util.Locale(language).displayLanguage.ifBlank { language } }.getOrDefault(language)
     }
     return "Track ${index + 1}"
+}
+
+private suspend fun sourceIdFor(graph: ServiceLocator.Graph, mediaKey: String): Long {
+    val parsed = parseMediaKey(mediaKey) ?: return 0L
+    return when (parsed.kind) {
+        "movie" -> graph.catalogRepository.movie(parsed.id)?.sourceId ?: 0L
+        "ep" -> graph.catalogRepository.episode(parsed.id)?.sourceId ?: 0L
+        else -> 0L
+    }
 }
 
 private fun formatDuration(ms: Long): String {

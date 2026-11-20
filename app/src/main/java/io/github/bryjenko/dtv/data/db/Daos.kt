@@ -611,6 +611,10 @@ interface SeriesDao {
     @Query("SELECT * FROM series WHERE id = :id")
     suspend fun byId(id: Long): Series?
 
+    /** The show as the provider numbers it, scoped to one playlist so two sources cannot collide. */
+    @Query("SELECT * FROM series WHERE sourceId = :sourceId AND seriesId = :seriesId LIMIT 1")
+    suspend fun bySourceAndSeriesId(sourceId: Long, seriesId: String): Series?
+
     @Query("UPDATE series SET favourite = :favourite WHERE id = :id")
     suspend fun setFavourite(id: Long, favourite: Boolean)
 
@@ -632,6 +636,13 @@ interface SeriesDao {
 interface EpisodeDao {
     @Query("SELECT * FROM episodes WHERE sourceId = :sourceId AND seriesId = :seriesId ORDER BY season, episodeNumber")
     fun observeForSeries(sourceId: Long, seriesId: String): Flow<List<Episode>>
+
+    /** Same ordering as [observeForSeries], as a one-shot read for My List's "next episode". */
+    @Query(
+        "SELECT * FROM episodes WHERE sourceId = :sourceId AND seriesId = :seriesId " +
+            "ORDER BY season, episodeNumber, id",
+    )
+    suspend fun listForSeries(sourceId: Long, seriesId: String): List<Episode>
 
     @Query("SELECT * FROM episodes WHERE id = :id")
     suspend fun byId(id: Long): Episode?
@@ -664,11 +675,27 @@ interface PlaybackPositionDao {
     @Query("SELECT * FROM playback_positions WHERE profileId = :profileId")
     suspend fun forProfile(profileId: Long): List<PlaybackPosition>
 
+    /** One profile's positions, newest first — My List watches this. */
+    @Query(
+        "SELECT * FROM playback_positions WHERE profileId = :profileId ORDER BY updatedAtMillis DESC",
+    )
+    fun observeForProfile(profileId: Long): Flow<List<PlaybackPosition>>
+
+    /** Positions for one playlist only, so a second provider cannot be read as the first. */
+    @Query(
+        "SELECT * FROM playback_positions WHERE profileId = :profileId AND sourceId = :sourceId " +
+            "ORDER BY updatedAtMillis DESC",
+    )
+    suspend fun forProfileAndSource(profileId: Long, sourceId: Long): List<PlaybackPosition>
+
     @Upsert
     suspend fun upsert(position: PlaybackPosition)
 
     @Query("DELETE FROM playback_positions WHERE profileId = :profileId AND mediaKey = :key")
     suspend fun delete(profileId: Long, key: String)
+
+    @Query("DELETE FROM playback_positions WHERE profileId = :profileId AND mediaKey IN (:keys)")
+    suspend fun deleteKeys(profileId: Long, keys: List<String>)
 }
 
 @Dao

@@ -18,9 +18,9 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 
-/** A short remote OK selects; holding it favours. Touch users keep tap and long-press behaviour. */
+/** A short remote OK selects; holding it is the long-press. Touch users keep tap and long-press. */
 @OptIn(ExperimentalFoundationApi::class)
-internal fun Modifier.remoteSelectOrLongSelect(
+fun Modifier.remoteSelectOrLongSelect(
     onSelect: () -> Unit,
     onLongSelect: () -> Unit,
 ): Modifier = composed {

@@ -367,19 +367,32 @@ data class Episode(
  * Resume position for a movie or episode, per profile. Live TV is never resumed.
  *
  * Keyed by (profileId, mediaKey) so two people's progress through the same film stay separate —
- * the whole point of profiles.
+ * the whole point of profiles. [sourceId] stamps which playlist the row belongs to, so two
+ * providers cannot collide even when their catalogue ids would otherwise look alike. Existing
+ * rows from before that column existed read back as 0 and are re-stamped the next time playback
+ * saves them; the catalogue row the media key points at still knows its real provider.
  */
-@Entity(tableName = "playback_positions", primaryKeys = ["profileId", "mediaKey"])
+@Entity(
+    tableName = "playback_positions",
+    primaryKeys = ["profileId", "mediaKey"],
+    indices = [Index(value = ["sourceId"])],
+)
 data class PlaybackPosition(
     val profileId: Long,
     val mediaKey: String,
     val positionMillis: Long,
     val durationMillis: Long,
     val updatedAtMillis: Long,
+    /** Playlist this progress belongs to. 0 only on rows written before the column existed. */
+    @ColumnInfo(defaultValue = "0") val sourceId: Long = 0,
 ) {
-    /** Treat the last 5% as "finished" so we do not resume two seconds before the credits. */
+    /**
+     * Finished at about 95% watched, or with a few minutes left. See [WatchProgress].
+     * Finished movies leave Continue Watching; a finished episode is how My List knows to offer
+     * the next one.
+     */
     val isFinished: Boolean
-        get() = durationMillis > 0 && positionMillis.toDouble() / durationMillis > 0.95
+        get() = WatchProgress.isFinished(positionMillis, durationMillis)
 }
 
 /** A local viewing profile — just a name. No account, no password; it lives on this device. */

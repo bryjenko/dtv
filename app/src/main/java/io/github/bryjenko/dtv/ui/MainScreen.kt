@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
@@ -70,6 +71,7 @@ import io.github.bryjenko.dtv.data.model.Movie
 import io.github.bryjenko.dtv.data.model.Recording
 import io.github.bryjenko.dtv.data.model.Series
 import io.github.bryjenko.dtv.ui.channels.HomeScreen
+import io.github.bryjenko.dtv.ui.mylist.MyListScreen
 import io.github.bryjenko.dtv.ui.recordings.RecordingsScreen
 import io.github.bryjenko.dtv.ui.vod.MoviesScreen
 import io.github.bryjenko.dtv.ui.vod.SeriesScreen
@@ -85,6 +87,7 @@ enum class Tab(val labelRes: Int, val icon: ImageVector) {
     MOVIES(R.string.nav_movies, Icons.Filled.Movie),
     SHOWS(R.string.nav_shows, Icons.Filled.Tv),
     RECORDINGS(R.string.nav_recordings, Icons.Filled.FiberManualRecord),
+    MY_LIST(R.string.nav_my_list, Icons.Filled.Star),
 }
 
 private val RAIL_COLLAPSED = 76.dp
@@ -131,6 +134,7 @@ fun MainScreen(
             if (moviesEnabled) add(Tab.MOVIES)
             if (seriesEnabled) add(Tab.SHOWS)
             add(Tab.RECORDINGS)
+            add(Tab.MY_LIST)
         }
     }
     // The default/home tab is the first visible one — Live TV normally, otherwise the first type
@@ -216,6 +220,10 @@ fun MainScreen(
                     isSyncing = isSyncing,
                 )
                 Tab.RECORDINGS -> RecordingsScreen(onPlay = onPlayRecording)
+                Tab.MY_LIST -> MyListScreen(
+                    onPlayChannel = onPlayChannel,
+                    onResume = onResume,
+                )
             }
         }
       }
