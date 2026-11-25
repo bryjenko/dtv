@@ -94,7 +94,7 @@ class PlayerController(
 
     sealed interface State {
         data object Idle : State
-        data class Buffering(val title: String) : State
+        data class Buffering(val title: String, val initial: Boolean = false) : State
         data class Playing(val title: String) : State
         /** Playback stopped and retries are exhausted. [message] is written for humans. */
         data class Error(val title: String, val message: String, val canRetry: Boolean) : State
@@ -119,6 +119,8 @@ class PlayerController(
     private var switchJob: Job? = null
     private var current: Request? = null
     private var consecutiveFailures = 0
+    /** False until this request first reaches STATE_READY; distinguishes start-up from a rebuffer. */
+    private var reachedReady = false
 
     /**
      * Held so the User-Agent can be swapped per source before each tune.
@@ -236,9 +238,10 @@ class PlayerController(
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     val title = current?.title.orEmpty()
                     _state.value = when (playbackState) {
-                        Player.STATE_BUFFERING -> State.Buffering(title)
+                        Player.STATE_BUFFERING -> State.Buffering(title, initial = !reachedReady)
                         Player.STATE_READY -> {
                             consecutiveFailures = 0
+                            reachedReady = true
                             State.Playing(title)
                         }
                         Player.STATE_IDLE -> _state.value
@@ -283,8 +286,9 @@ class PlayerController(
             if (debounce) delay(switchDebounceMillis)
 
             consecutiveFailures = 0
+            reachedReady = false
             httpFactory.setDefaultRequestProperties(mapOf("User-Agent" to request.userAgent))
-            _state.value = State.Buffering(request.title)
+            _state.value = State.Buffering(request.title, initial = true)
 
             val mediaItem = MediaItem.Builder()
                 .setUri(request.url)
@@ -406,7 +410,7 @@ class PlayerController(
          */
         const val MIN_BUFFER_MILLIS = 30_000
         const val MAX_BUFFER_MILLIS = 90_000
-        const val BUFFER_FOR_PLAYBACK_MILLIS = 2_500
+        const val BUFFER_FOR_PLAYBACK_MILLIS = 5_000
         const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MILLIS = 5_000
 
         // DVR mode (pause & rewind live TV): keep a couple of minutes behind the live edge to seek

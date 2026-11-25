@@ -471,11 +471,26 @@ fun PlayerScreen(
 
         when (val current = state) {
             is PlayerController.State.Buffering -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(Modifier.height(16.dp))
-                        Text(current.title, color = Color.White)
+                if (current.initial && !inPip) {
+                    // Opening buffer: a small corner note, not a full-screen spinner over a
+                    // still-black picture. Mid-stream rebuffers keep the existing centred overlay.
+                    PreBufferingNote(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .windowInsetsPadding(
+                                WindowInsets.safeDrawing.only(
+                                    WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
+                                ),
+                            )
+                            .padding(end = 32.dp, bottom = if (controlsVisible) 140.dp else 32.dp),
+                    )
+                } else if (!current.initial) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator()
+                            Spacer(Modifier.height(16.dp))
+                            Text(current.title, color = Color.White)
+                        }
                     }
                 }
             }
@@ -928,6 +943,29 @@ private fun OptionRow(
         if (selected) {
             Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.common_selected), tint = fg)
         }
+    }
+}
+
+@Composable
+private fun PreBufferingNote(modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color.Black.copy(alpha = 0.82f))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(16.dp),
+            strokeWidth = 2.dp,
+            color = Color.White,
+        )
+        Text(
+            stringResource(R.string.player_prebuffering),
+            color = Color.White,
+            style = MaterialTheme.typography.labelLarge,
+        )
     }
 }
 
