@@ -33,6 +33,8 @@ import io.github.bryjenko.dtv.data.remote.XtreamApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -134,6 +136,9 @@ class CatalogRepository(
 
     /** TMDB back-fill for VOD detail pages, gated on a user-supplied key. See [TmdbClient]. */
     private val tmdb = TmdbClient(http, settings)
+
+    /** One live-catalogue fetch at a time, so opening Manage on phone and the TV manager together cannot clobber each other. */
+    private val liveSyncMutex = Mutex()
 
     /** Reapply saved user channel state as provider catalogues arrive after a device restore. */
     private suspend fun replaceCatalogueApplyingBackup(sourceId: Long, incoming: List<Channel>, stamp: Long) {
@@ -667,18 +672,44 @@ class CatalogRepository(
 
     /** Live channels only — the fast path so the guide can show before VOD and the guide load. */
     suspend fun syncLive(source: Source, nowUtcMillis: Long): SyncResult = withContext(Dispatchers.IO) {
-        try {
-            when (source.kind) {
-                SourceKind.XTREAM -> syncXtreamLive(source, nowUtcMillis)
-                SourceKind.M3U -> syncM3u(source, nowUtcMillis)
-                SourceKind.STALKER -> syncStalkerLive(source, nowUtcMillis)
+        liveSyncMutex.withLock {
+            try {
+                when (source.kind) {
+                    SourceKind.XTREAM -> syncXtreamLive(source, nowUtcMillis)
+                    SourceKind.M3U -> syncM3u(source, nowUtcMillis)
+                    SourceKind.STALKER -> syncStalkerLive(source, nowUtcMillis)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Catalogue sync failed for source ${source.id}", e)
+                SyncResult.Failed(e.message ?: "The catalogue could not be downloaded.", e)
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.w(TAG, "Catalogue sync failed for source ${source.id}", e)
-            SyncResult.Failed(e.message ?: "The catalogue could not be downloaded.", e)
         }
+    }
+
+    /**
+     * Refresh live groups and channels for every enabled provider. Used when the user opens the
+     * phone manager or the on-TV channel manager, so those screens are not looking at a stale
+     * Room cache. Movies and series stay on the periodic worker — they are slow and not what
+     * those screens edit.
+     */
+    data class LiveSyncSummary(val sourcesOk: Int, val sourcesFailed: Int) {
+        val allOk: Boolean get() = sourcesFailed == 0
+    }
+
+    suspend fun syncAllEnabledLive(nowUtcMillis: Long = System.currentTimeMillis()): LiveSyncSummary {
+        val sources = enabledSources()
+        if (sources.isEmpty()) return LiveSyncSummary(0, 0)
+        var ok = 0
+        var failed = 0
+        for (source in sources) {
+            when (syncLive(source, nowUtcMillis)) {
+                is SyncResult.Success -> ok++
+                is SyncResult.Failed -> failed++
+            }
+        }
+        return LiveSyncSummary(ok, failed)
     }
 
     /** Movies + series — best-effort, meant to run in the background so a huge VOD list never

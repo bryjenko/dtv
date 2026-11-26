@@ -152,7 +152,7 @@
     <string name="addons_empty">No add-ons yet. Paste a manifest URL above to add one.</string>
     <string name="settings_guide_title">TV guide</string>
     <string name="settings_guide_subtitle">Guide sources and free XMLTV feeds</string>
-    <string name="settings_channels_subtitle">Hide or favourite individual channels</string>
+    <string name="settings_channels_subtitle">Show or hide individual channels</string>
     <string name="settings_webmanager_title">Manage on phone or laptop</string>
     <string name="settings_webmanager_subtitle">Organise channels in a browser, with a keyboard and mouse</string>
     <string name="settings_display_title">Display &amp; playback</string>
@@ -394,11 +394,13 @@
     <string name="webmanager_open_browser">Camera won\'t scan it? Open this in any browser on the same wifi:</string>
     <string name="webmanager_local_only">This page is served by this television, over your own network — it never leaves your home.</string>
     <string name="webmanager_stopped">Manager closed</string>
+    <string name="webmanager_syncing">Syncing with provider…</string>
+    <string name="webmanager_sync_failed">Couldn\'t refresh from the provider. Showing the last saved list.</string>
 
     <!-- ============================ Channel manager ============================ -->
     <string name="channels_manager_title">Channel manager</string>
-    <string name="channels_manager_hint">Search to hide or favourite channels</string>
-    <string name="channels_manager_search_hint">Search for a channel, then hide it from the guide or star it.</string>
+    <string name="channels_manager_hint">Search to show or hide channels</string>
+    <string name="channels_manager_search_hint">Search for a channel, then hide it from the guide or bring it back.</string>
     <string name="channels_manager_no_match">No channels match “%1$s”.</string>
     <string name="channels_manager_all_sources">All sources</string>
     <string name="channels_manager_source_header">Source</string>
@@ -410,6 +412,8 @@
     <string name="channels_manager_group_hidden">All channels in this group are hidden</string>
     <string name="channels_manager_group_partial">Some channels in this group are hidden</string>
     <string name="channels_manager_group_showing">All channels in this group are showing</string>
+    <string name="channels_manager_syncing">Syncing with provider…</string>
+    <string name="channels_manager_sync_failed">Couldn\'t refresh from the provider. Showing the last saved list.</string>
     <string name="channels_hidden">Hidden</string>
     <string name="channels_showing">Showing</string>
     <string name="channels_show">Show</string>
