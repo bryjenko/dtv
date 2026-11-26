@@ -41,6 +41,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.bryjenko.dtv.R
 import io.github.bryjenko.dtv.pairing.ManagerServer
 import io.github.bryjenko.dtv.pairing.QrCodes
+import io.github.bryjenko.dtv.ui.WebManagerUiState
 import io.github.bryjenko.dtv.ui.WebManagerViewModel
 
 /**
@@ -57,7 +58,7 @@ fun WebManagerScreen(
     onBack: () -> Unit,
     viewModel: WebManagerViewModel = viewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.uiState.collectAsState()
 
     DisposableEffect(Unit) {
         viewModel.start()
@@ -69,9 +70,9 @@ fun WebManagerScreen(
 
     Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
         when (val current = state) {
-            is ManagerServer.State.Listening -> Listening(current.session, onBack)
+            is WebManagerUiState.Ready -> Listening(current.session, current.syncFailed, onBack)
 
-            is ManagerServer.State.Failed -> Column(
+            is WebManagerUiState.Failed -> Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
@@ -91,13 +92,21 @@ fun WebManagerScreen(
                 }
             }
 
-            ManagerServer.State.Idle -> CircularProgressIndicator()
+            WebManagerUiState.Syncing -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    stringResource(R.string.webmanager_syncing),
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun Listening(session: ManagerServer.Session, onBack: () -> Unit) {
+private fun Listening(session: ManagerServer.Session, syncFailed: Boolean, onBack: () -> Unit) {
     // Generated once per session — encoding is not free and the content does not change.
     val qr = remember(session.url) { QrCodes.render(session.url, QR_SIZE_PX) }
 
@@ -125,6 +134,14 @@ private fun Listening(session: ManagerServer.Session, onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (syncFailed) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    stringResource(R.string.webmanager_sync_failed),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
 
             Spacer(Modifier.height(28.dp))
             Text(

@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -620,6 +621,25 @@ class ChannelsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun selectManagerCategory(key: String?) { managerSelectedCategory.value = key }
+
+    /**
+     * Refresh live groups and channels when the on-TV channel manager opens, so it is not
+     * looking at a stale Room cache. Failures leave the last saved list in place.
+     */
+    enum class ManagerCatalogSync { Idle, Syncing, Failed }
+
+    private val _managerCatalogSync = MutableStateFlow(ManagerCatalogSync.Idle)
+    val managerCatalogSync: StateFlow<ManagerCatalogSync> = _managerCatalogSync.asStateFlow()
+
+    fun refreshManagerCatalog() {
+        if (_managerCatalogSync.value == ManagerCatalogSync.Syncing) return
+        viewModelScope.launch {
+            _managerCatalogSync.value = ManagerCatalogSync.Syncing
+            val summary = graph.catalogRepository.syncAllEnabledLive()
+            _managerCatalogSync.value =
+                if (summary.allOk) ManagerCatalogSync.Idle else ManagerCatalogSync.Failed
+        }
+    }
 
     /** Hide or show every channel in the selected logical category group. */
     fun setManagerGroupHidden(hidden: Boolean) {
@@ -1263,21 +1283,72 @@ class SyncViewModel(app: Application) : AndroidViewModel(app) {
     }
 }
 
+sealed interface WebManagerUiState {
+    /** Fetching a fresh catalogue before the QR is shown. */
+    data object Syncing : WebManagerUiState
+    data class Ready(val session: ManagerServer.Session, val syncFailed: Boolean) : WebManagerUiState
+    data class Failed(val reason: String) : WebManagerUiState
+}
+
 /**
  * Owns the "manage channels from your phone or laptop" web server for the manage screen.
  *
  * Same ownership shape as [SyncViewModel]: the server is bound to [viewModelScope] (so its idle
  * watchdog is torn down with the screen) and stopped in [onCleared]. The screen also starts it on
  * open and stops it on leave, mirroring the phone-pairing lifecycle — so no socket is ever left
- * listening on the user's network once they navigate away.
+ * listening on the user's network once they navigate away. Opening the screen first refreshes
+ * live groups and channels from the provider so the phone is not served a stale Room cache.
  */
 class WebManagerViewModel(app: Application) : AndroidViewModel(app) {
     private val graph = ServiceLocator.get(app)
     private val server = ManagerServer(viewModelScope, graph.catalogRepository, graph.settings, graph.sourceRepository)
 
-    val state: StateFlow<ManagerServer.State> = server.state
+    private val _uiState = MutableStateFlow<WebManagerUiState>(WebManagerUiState.Syncing)
+    val uiState: StateFlow<WebManagerUiState> = _uiState.asStateFlow()
 
-    fun start() = server.start()
+    private var startJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            server.state.collect { state ->
+                when (state) {
+                    is ManagerServer.State.Listening -> {
+                        val syncFailed = (_uiState.value as? WebManagerUiState.Ready)?.syncFailed ?: false
+                        if (_uiState.value !is WebManagerUiState.Syncing) {
+                            _uiState.value = WebManagerUiState.Ready(state.session, syncFailed)
+                        }
+                    }
+                    is ManagerServer.State.Failed ->
+                        _uiState.value = WebManagerUiState.Failed(state.reason)
+                    ManagerServer.State.Idle -> Unit
+                }
+            }
+        }
+    }
+
+    /**
+     * Sync live groups and channels from the provider, then open the local web server.
+     * The QR is held back until the refresh finishes so the phone's first load is fresh.
+     * If the refresh fails, the last saved list is served and the TV shows a note.
+     */
+    fun start() {
+        if (startJob?.isActive == true) return
+        startJob = viewModelScope.launch {
+            _uiState.value = WebManagerUiState.Syncing
+            val summary = graph.catalogRepository.syncAllEnabledLive()
+            if (server.state.value !is ManagerServer.State.Listening) server.start()
+            when (val state = server.state.value) {
+                is ManagerServer.State.Listening ->
+                    _uiState.value = WebManagerUiState.Ready(state.session, syncFailed = !summary.allOk)
+                is ManagerServer.State.Failed ->
+                    _uiState.value = WebManagerUiState.Failed(state.reason)
+                ManagerServer.State.Idle ->
+                    _uiState.value = WebManagerUiState.Failed(
+                        "Could not start the channel manager on this device.",
+                    )
+            }
+        }
+    }
 
     fun stop() = server.stop()
 

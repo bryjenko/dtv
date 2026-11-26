@@ -26,9 +26,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
@@ -44,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
@@ -63,14 +62,14 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 
 /**
- * Channel manager: browse your channels by category and, for each, favourite it or hide it from
- * the guide.
+ * Channel manager: browse your channels by category and show or hide them from the guide.
+ * Favouriting lives on the main Live TV page, not here.
  *
  * Two panes. LEFT is Search plus a scrollable category list (with a source filter when more than
  * one provider is configured, so a second source can be kept separate rather than merged). RIGHT
- * is the channels in the selected category — each a logo, name, favourite star and a show/hide
- * switch. Hidden channels appear here too, greyed, so they can be brought back; the guide never
- * shows them, but the manager shows everything.
+ * is the channels in the selected category — each a logo, name, an optional read-only favourite
+ * star, and a show/hide switch. Hidden channels appear here too, greyed, so they can be brought
+ * back; the guide never shows them, but the manager shows everything.
  *
  * The right pane is always scoped to one category (and optionally one source): a flat list of a
  * 20,000-channel provider is unscrollable on a remote, so browsing is by category by design.
@@ -85,6 +84,8 @@ fun ChannelManagerScreen(
     val selectedSource by viewModel.managerSelectedSource.collectAsState()
     val selectedCategory by viewModel.managerSelectedCategory.collectAsState()
     val browseRows by viewModel.managerRows.collectAsState()
+    val catalogSync by viewModel.managerCatalogSync.collectAsState()
+    LaunchedEffect(Unit) { viewModel.refreshManagerCatalog() }
 
     // Search is one option among browse-by-category: the "Search" rail entry flips the right pane
     // to the original keyboard-driven search, which is kept intact rather than thrown away.
@@ -135,7 +136,24 @@ fun ChannelManagerScreen(
             OutlinedButton(onClick = onBack) { Text(stringResource(R.string.common_done)) }
         }
 
+        if (catalogSync != ChannelsViewModel.ManagerCatalogSync.Idle) {
+            Text(
+                stringResource(
+                    if (catalogSync == ChannelsViewModel.ManagerCatalogSync.Syncing)
+                        R.string.channels_manager_syncing
+                    else
+                        R.string.channels_manager_sync_failed,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (catalogSync == ChannelsViewModel.ManagerCatalogSync.Failed)
+                    MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp),
+            )
+        }
+
         Row(Modifier.weight(1f).fillMaxWidth()) {
+
             // ---- LEFT pane: Search, an optional source filter, and the category list ----------
             LazyColumn(
                 modifier = Modifier
@@ -202,7 +220,6 @@ fun ChannelManagerScreen(
                         onBackspace = { query = query.dropLast(1) },
                         onClear = { query = "" },
                         onToggleHidden = { row, hidden -> viewModel.setRowHidden(row, !hidden) },
-                        onToggleFavourite = { viewModel.toggleFavourite(it) },
                     )
                 } else {
                     BrowsePane(
@@ -214,7 +231,6 @@ fun ChannelManagerScreen(
                         onExitLeft = onExitLeftToRail,
                         onToggleGroup = { currentlyHidden -> viewModel.setManagerGroupHidden(!currentlyHidden) },
                         onToggleHidden = { row, hidden -> viewModel.setRowHidden(row, !hidden) },
-                        onToggleFavourite = { viewModel.toggleFavourite(it) },
                     )
                 }
             }
@@ -232,7 +248,6 @@ private fun SearchPane(
     onBackspace: () -> Unit,
     onClear: () -> Unit,
     onToggleHidden: (ChannelsViewModel.Row, Boolean) -> Unit,
-    onToggleFavourite: (ChannelsViewModel.Row) -> Unit,
 ) {
     Row(Modifier.fillMaxSize()) {
         OnScreenKeyboard(onKey = onKey, onSpace = onSpace, onBackspace = onBackspace, onClear = onClear)
@@ -249,7 +264,6 @@ private fun SearchPane(
                             row = row,
                             hidden = hidden,
                             onToggleHidden = { onToggleHidden(row, hidden) },
-                            onToggleFavourite = { onToggleFavourite(row) },
                         )
                     }
                 }
@@ -269,7 +283,6 @@ private fun BrowsePane(
     onExitLeft: () -> Boolean,
     onToggleGroup: (Boolean) -> Unit,
     onToggleHidden: (ChannelsViewModel.Row, Boolean) -> Unit,
-    onToggleFavourite: (ChannelsViewModel.Row) -> Unit,
 ) {
     when {
         !hasCategories -> Hint(stringResource(R.string.channels_manager_no_channels))
@@ -280,12 +293,34 @@ private fun BrowsePane(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             item {
+                var groupFocused by remember { mutableStateOf(false) }
+                val groupBg = if (groupFocused) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.surface
+                val groupFg = if (groupFocused) MaterialTheme.colorScheme.onPrimary
+                else MaterialTheme.colorScheme.onSurface
+                val groupFgMuted = if (groupFocused) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                else MaterialTheme.colorScheme.onSurfaceVariant
                 Row(
-                    Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                        .onFocusChanged { groupFocused = it.hasFocus }
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(groupBg)
+                        .onPreviewKeyEvent { e ->
+                            if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionLeft) onExitLeft()
+                            else false
+                        }
+                        .clickable { onToggleGroup(allHidden) }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.channels_manager_group_visibility), fontWeight = FontWeight.SemiBold)
+                        Text(
+                            stringResource(R.string.channels_manager_group_visibility),
+                            fontWeight = FontWeight.SemiBold,
+                            color = groupFg,
+                        )
                         Text(
                             stringResource(
                                 when {
@@ -295,10 +330,14 @@ private fun BrowsePane(
                                 },
                             ),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = groupFgMuted,
                         )
                     }
-                    Switch(checked = !allHidden, onCheckedChange = { onToggleGroup(allHidden) })
+                    Switch(
+                        checked = !allHidden,
+                        onCheckedChange = { onToggleGroup(allHidden) },
+                        modifier = Modifier.focusProperties { canFocus = false },
+                    )
                 }
             }
             items(rows, key = { it.key }) { row ->
@@ -307,9 +346,7 @@ private fun BrowsePane(
                     row = row,
                     hidden = hidden,
                     onToggleHidden = { onToggleHidden(row, hidden) },
-                    onToggleFavourite = { onToggleFavourite(row) },
-                    // LEFT from the row's leftmost control (the star) hops back to the category
-                    // rail; from the switch it first steps left to the star, as usual.
+                    // LEFT from the focused row hops back to the category rail.
                     leftEdgeModifier = Modifier.onPreviewKeyEvent { e ->
                         if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionLeft) onExitLeft()
                         else false
@@ -377,15 +414,29 @@ private fun ManagerRow(
     row: ChannelsViewModel.Row,
     hidden: Boolean,
     onToggleHidden: () -> Unit,
-    onToggleFavourite: () -> Unit,
     leftEdgeModifier: Modifier = Modifier,
 ) {
-    val alpha = if (hidden) 0.5f else 1f
+    // The row itself is the D-pad target. The switch stays visible (and works on touch)
+    // but is not independently focusable, so up/down moves one channel at a time and the
+    // highlight follows the focused row. OK (and a tap) shows or hides. Favouriting is
+    // done from the main Live TV page; a filled star here is only a read-only reminder.
+    var focused by remember { mutableStateOf(false) }
+    val bg = if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+    val nameColor = (if (focused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
+        .copy(alpha = if (hidden) 0.6f else 1f)
+    val statusColor = when {
+        focused -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+        hidden -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.primary
+    }
     Row(
         Modifier
             .fillMaxWidth()
+            .onFocusChanged { focused = it.hasFocus }
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(bg)
+            .then(leftEdgeModifier)
+            .clickable(onClick = onToggleHidden)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -399,30 +450,39 @@ private fun ManagerRow(
             Text(
                 row.primary.shownName,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
+                color = nameColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 if (hidden) stringResource(R.string.channels_hidden) else stringResource(R.string.channels_showing),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (hidden) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.primary,
+                color = statusColor,
             )
         }
 
-        // The star is the row's leftmost focusable, so it carries the LEFT-to-rail handler.
-        IconButton(onClick = onToggleFavourite, modifier = leftEdgeModifier) {
+        if (row.primary.favourite) {
             Icon(
-                imageVector = if (row.primary.favourite) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                contentDescription = if (row.primary.favourite) stringResource(R.string.common_remove_favourite) else stringResource(R.string.common_favourite),
+                imageVector = Icons.Filled.Star,
+                contentDescription = stringResource(R.string.common_favourite),
+                tint = if (focused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp),
             )
+            Spacer(Modifier.width(8.dp))
         }
-        Spacer(Modifier.width(8.dp))
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.channels_show), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+            Text(
+                stringResource(R.string.channels_show),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = if (focused) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+            )
             // Checked = visible; off = hidden. Reads the natural way: switch it off to hide.
-            Switch(checked = !hidden, onCheckedChange = { onToggleHidden() })
+            Switch(
+                checked = !hidden,
+                onCheckedChange = { onToggleHidden() },
+                modifier = Modifier.focusProperties { canFocus = false },
+            )
         }
     }
 }

@@ -14,6 +14,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
 import io.github.bryjenko.dtv.data.model.Category
+import io.github.bryjenko.dtv.data.repo.mergeCatalogueChannels
 import io.github.bryjenko.dtv.data.model.Channel
 import io.github.bryjenko.dtv.data.model.EpgChannelAlias
 import io.github.bryjenko.dtv.data.model.EpgFeed
@@ -281,27 +282,7 @@ interface ChannelDao {
         if (incoming.isEmpty()) return
 
         val existing = userStateForSource(sourceId).associateBy { it.streamId }
-        val merged = incoming.map { channel ->
-            val previous = existing[channel.streamId]
-            if (previous == null) {
-                channel.copy(lastSeenMillis = syncStamp)
-            } else {
-                channel.copy(
-                    id = previous.id,
-                    favourite = previous.favourite,
-                    // OR, not overwrite: the importer hides separator rows ('### UK ###')
-                    // at parse time, and that decision must stick even for rows that
-                    // predate the rule. User hides are preserved the same way.
-                    hidden = previous.hidden || channel.hidden,
-                    sortIndex = previous.sortIndex,
-                    // A user's rename must outlive the provider's fresh name on every refresh.
-                    customName = previous.customName,
-                    epgOverrideId = previous.epgOverrideId,
-                    matchedEpgId = previous.matchedEpgId,
-                    lastSeenMillis = syncStamp,
-                )
-            }
-        }
+        val merged = mergeCatalogueChannels(existing, incoming, syncStamp)
         // Chunked so a 40,000-channel playlist does not build one enormous statement.
         merged.chunked(UPSERT_CHUNK).forEach { upsertAll(it) }
         deleteStale(sourceId, syncStamp)
